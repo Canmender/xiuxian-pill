@@ -1,0 +1,15 @@
+name: XiuXianPill
+version: 1.0
+main: com.xiuxian.pill.XiuXianPill
+api-version: 1.21
+softdepend:
+  - XiuXianCore
+  - PlaceholderAPI
+commands:
+  pill:
+    description: 丹药系统
+    usage: /pill [use|give|list|reload]
+permissions:
+  xipill.admin:
+    description: 管理员权限
+    default: op

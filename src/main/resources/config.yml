@@ -1,0 +1,171 @@
+# XiuXianPill Configuration - 经验丹系统
+
+# ===== 体修经验丹 =====
+# xp-amount: 直接给予的修为值
+# duration: 无用，保留字段
+
+lianti-pills:
+  0:
+    name: "&a开脉丹"
+    description: "&7服用后获得100修为"
+    realm: 通脉
+    xp-amount: 100
+    material: COAL
+  1:
+    name: "&a铸骨丹"
+    description: "&7服用后获得200修为"
+    realm: 锻骨
+    xp-amount: 200
+    material: COAL
+  2:
+    name: "&a洗腑丹"
+    description: "&7服用后获得400修为"
+    realm: 练腑
+    xp-amount: 400
+    material: COAL
+  3:
+    name: "&b凝元丹"
+    description: "&7服用后获得800修为"
+    realm: 元武
+    xp-amount: 800
+    material: COAL_BLOCK
+  4:
+    name: "&b神力丹"
+    description: "&7服用后获得1500修为"
+    realm: 神力
+    xp-amount: 1500
+    material: COAL_BLOCK
+  5:
+    name: "&b破虚丹"
+    description: "&7服用后获得3000修为"
+    realm: 破虚
+    xp-amount: 3000
+    material: COAL_BLOCK
+  6:
+    name: "&9混元丹"
+    description: "&7服用后获得5000修为"
+    realm: 混元
+    xp-amount: 5000
+    material: IRON_INGOT
+  7:
+    name: "&9大成丹"
+    description: "&7服用后获得8000修为"
+    realm: 大成
+    xp-amount: 8000
+    material: IRON_INGOT
+  8:
+    name: "&9涅槃丹"
+    description: "&7服用后获得12000修为"
+    realm: 涅槃
+    xp-amount: 12000
+    material: IRON_INGOT
+  9:
+    name: "&d真武丹"
+    description: "&7服用后获得20000修为"
+    realm: 真武
+    xp-amount: 20000
+    material: GOLD_INGOT
+  10:
+    name: "&d金相丹"
+    description: "&7服用后获得35000修为"
+    realm: 金相
+    xp-amount: 35000
+    material: GOLD_INGOT
+  11:
+    name: "&6太上丹"
+    description: "&7服用后获得60000修为"
+    realm: 太上
+    xp-amount: 60000
+    material: DIAMOND
+  12:
+    name: "&6罗天丹"
+    description: "&7服用后获得100000修为"
+    realm: 罗天
+    xp-amount: 100000
+    material: DIAMOND
+
+# ===== 法修经验丹 =====
+xiufa-pills:
+  0:
+    name: "&a聚气丹"
+    description: "&7服用后获得100修为"
+    realm: 练气
+    xp-amount: 100
+    material: COAL
+  1:
+    name: "&a固基丹"
+    description: "&7服用后获得200修为"
+    realm: 筑基
+    xp-amount: 200
+    material: COAL
+  2:
+    name: "&a凝丹丹"
+    description: "&7服用后获得400修为"
+    realm: 结丹
+    xp-amount: 400
+    material: COAL
+  3:
+    name: "&b化婴丹"
+    description: "&7服用后获得800修为"
+    realm: 元婴
+    xp-amount: 800
+    material: COAL_BLOCK
+  4:
+    name: "&b通神丹"
+    description: "&7服用后获得1500修为"
+    realm: 化神
+    xp-amount: 1500
+    material: COAL_BLOCK
+  5:
+    name: "&b归虚丹"
+    description: "&7服用后获得3000修为"
+    realm: 返虚
+    xp-amount: 3000
+    material: COAL_BLOCK
+  6:
+    name: "&9融合丹"
+    description: "&7服用后获得5000修为"
+    realm: 合体
+    xp-amount: 5000
+    material: IRON_INGOT
+  7:
+    name: "&9大乘丹"
+    description: "&7服用后获得8000修为"
+    realm: 大乘
+    xp-amount: 8000
+    material: IRON_INGOT
+  8:
+    name: "&9渡劫丹"
+    description: "&7服用后获得12000修为"
+    realm: 渡劫
+    xp-amount: 12000
+    material: IRON_INGOT
+  9:
+    name: "&d真仙丹"
+    description: "&7服用后获得20000修为"
+    realm: 真仙
+    xp-amount: 20000
+    material: GOLD_INGOT
+  10:
+    name: "&d金仙丹"
+    description: "&7服用后获得35000修为"
+    realm: 金仙
+    xp-amount: 35000
+    material: GOLD_INGOT
+  11:
+    name: "&6太乙丹"
+    description: "&7服用后获得60000修为"
+    realm: 太乙
+    xp-amount: 60000
+    material: DIAMOND
+  12:
+    name: "&6大罗丹"
+    description: "&7服用后获得100000修为"
+    realm: 大罗
+    xp-amount: 100000
+    material: DIAMOND
+
+# ===== 显示设置 =====
+use-message: "&a&l【服用】&7服用 &f{pill_name} &7获得 &c{xp_amount} &7修为"
+realm-too-high-message: "&c&l【境界不足】&7需要 &f{required_realm} &7境界才能服用此丹药"
+already-active-message: "&c&l【已生效】&7已有经验加成效果"
