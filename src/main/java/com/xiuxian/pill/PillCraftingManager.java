@@ -112,6 +112,11 @@ public class PillCraftingManager {
         return qualityIndex >= 0 && qualityIndex < QUALITY_COLORS.length ? QUALITY_COLORS[qualityIndex] : "\u00a77";
     }
 
+    public double getXpMult(int index) {
+        double[] m = {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
+        return index >= 0 && index < m.length ? m[index] : 1.0;
+    }
+
     public static class CraftResult {
         public final boolean success;
         public final int qualityIndex; // -1=scrap, 0-6=quality
