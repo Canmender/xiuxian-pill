@@ -263,7 +263,7 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
         if (pill == null) pill = xiufaPills.get(pillType);
         if (pill == null) { sender.sendMessage("\u00a7c\u65e0\u6548\u7684\u4e39\u836f\u7c7b\u578b: " + pillType); return; }
 
-        ItemStack item = createPillItem(pill);
+        ItemStack item = createPillItem(pill, 0);
         item.setAmount(amount);
         target.getInventory().addItem(item);
         sender.sendMessage(colorize("\u00a7a\u7ed9\u4e88 " + target.getName() + " " + pill.name + " x" + amount));
