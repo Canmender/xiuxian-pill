@@ -275,16 +275,16 @@ public class AlchemyGUI implements Listener {
 
     private boolean hasMoney(Player p, int amt) {
         try {
-            org.bukkit.plugin.Plugin xc = Bukkit.getPluginManager().getPlugin("XConomy");
-            if (xc != null) return (boolean) xc.getClass().getMethod("has", Player.class, double.class).invoke(xc, p, (double)amt);
+            net.milkbowl.vault.economy.Economy eco = getVaultEconomy();
+            if (eco != null) return eco.has(p, amt);
         } catch (Exception e) {}
         return false;
     }
 
     private void payMoney(Player p, int amt) {
         try {
-            org.bukkit.plugin.Plugin xc = Bukkit.getPluginManager().getPlugin("XConomy");
-            if (xc != null) xc.getClass().getMethod("pay", Player.class, String.class, double.class).invoke(xc, p, "main", (double)amt);
+            net.milkbowl.vault.economy.Economy eco = getVaultEconomy();
+            if (eco != null) eco.withdrawPlayer(p, amt);
         } catch (Exception e) {}
     }
 
@@ -309,6 +309,16 @@ public class AlchemyGUI implements Listener {
             it.setItemMeta(m);
         }
         return it;
+    }
+
+    private net.milkbowl.vault.economy.Economy getVaultEconomy() {
+        try {
+            org.bukkit.plugin.Plugin vault = Bukkit.getPluginManager().getPlugin("Vault");
+            if (vault == null) return null;
+            java.lang.reflect.Method getEconomy = vault.getClass().getMethod("getEconomy");
+            return (net.milkbowl.vault.economy.Economy) getEconomy.invoke(vault);
+        } catch (Exception e) {}
+        return null;
     }
 
     private void glass(Inventory inv) {
