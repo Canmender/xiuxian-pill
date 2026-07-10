@@ -309,10 +309,12 @@ public class AlchemyGUI implements Listener {
         try {
             org.bukkit.plugin.Plugin ecoPlugin = Bukkit.getPluginManager().getPlugin("XiuXianEco");
             if (ecoPlugin != null) {
-                com.xiuxian.eco.EcoManager eco = ((com.xiuxian.eco.XiuXianEco) ecoPlugin).getEcoManager();
-                eco.removeBalance(p, "lingshi", amt);
+                Object ecoManager = ecoPlugin.getClass().getMethod("getEcoManager").invoke(ecoPlugin);
+                ecoManager.getClass().getMethod("removeBalance", org.bukkit.entity.Player.class, String.class, double.class).invoke(ecoManager, p, "lingshi", (double) amt);
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void giveXp(Player p, int amt, boolean lianti) {

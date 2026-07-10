@@ -32,26 +32,22 @@ public class AlchemistPAPIExpansion extends PlaceholderExpansion {
             case "balance":
             case "money":
             case "lingshi":
-                try {
-                    org.bukkit.plugin.Plugin ecoPlugin = Bukkit.getPluginManager().getPlugin("XiuXianEco");
-                    if (ecoPlugin != null) {
-                        com.xiuxian.eco.EcoManager eco = ((com.xiuxian.eco.XiuXianEco) ecoPlugin).getEcoManager();
-                        double bal = eco.getBalance(player, "lingshi");
-                        return String.valueOf((long) bal);
-                    }
-                } catch (Exception e) {}
-                return "0";
+                return getEcoBalance(player, "lingshi");
             case "xianyuan":
-                try {
-                    org.bukkit.plugin.Plugin ecoPlugin2 = Bukkit.getPluginManager().getPlugin("XiuXianEco");
-                    if (ecoPlugin2 != null) {
-                        com.xiuxian.eco.EcoManager eco2 = ((com.xiuxian.eco.XiuXianEco) ecoPlugin2).getEcoManager();
-                        double bal2 = eco2.getBalance(player, "xianyuan");
-                        return String.valueOf((long) bal2);
-                    }
-                } catch (Exception e) {}
-                return "0";
+                return getEcoBalance(player, "xianyuan");
             default: return null;
         }
+    }
+
+    private String getEcoBalance(Player player, String currency) {
+        try {
+            org.bukkit.plugin.Plugin ecoPlugin = Bukkit.getPluginManager().getPlugin("XiuXianEco");
+            if (ecoPlugin != null) {
+                Object ecoManager = ecoPlugin.getClass().getMethod("getEcoManager").invoke(ecoPlugin);
+                double bal = (double) ecoManager.getClass().getMethod("getBalance", org.bukkit.entity.Player.class, String.class).invoke(ecoManager, player, currency);
+                return String.valueOf((long) bal);
+            }
+        } catch (Exception e) {}
+        return "0";
     }
 }
