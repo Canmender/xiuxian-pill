@@ -207,14 +207,15 @@ public class AlchemyGUI implements Listener {
             if (itemsPlugin != null) {
                 Object itemStack = itemsPlugin.getClass().getMethod("getItemStack", String.class).invoke(itemsPlugin, pillItemId);
                 if (itemStack != null) {
-                    ((org.bukkit.inventory.ItemStack) itemStack).setAmount(r.qualityIndex + 1);
+                    ((org.bukkit.inventory.ItemStack) itemStack).setAmount(1);
                     p.getInventory().addItem((org.bukkit.inventory.ItemStack) itemStack);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        p.sendMessage(qColor + "\u00a7l\u3010\u70bc\u4e39\u6210\u529f\u3011" + qColor + qName + "\u7075\u4e39\uff0c\u83b7\u5f97 \u00a7e" + finalXp + " \u00a77\u4fee\u4e3a");
+        String pillName = (String) pill.get("name");
+        p.sendMessage(qColor + "\u00a7l\u3010\u70bc\u4e39\u6210\u529f\u3011" + qColor + qName + pillName + "\uff0c\u83b7\u5f971\u9897");
         alchemistManager.addXp(p, r.alchemistXp);
     }
 

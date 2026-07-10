@@ -279,6 +279,38 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
         usePill(p, pill, item);
     }
 
+    private void useXiuXianItemsPill(Player p, ItemStack item, int cmd) {
+        // cmd 20001-20182 -> pill index 0-181
+        int idx = cmd - 20001;
+        int pillIdx = idx / 7;  // 26 pill types
+        int qualityIdx = idx % 7;  // 7 qualities
+
+        String[] pillIds = {"lt0","lt1","lt2","lt3","lt4","lt5","lt6","lt7","lt8","lt9","lt10","lt11","lt12",
+                            "xf0","xf1","xf2","xf3","xf4","xf5","xf6","xf7","xf8","xf9","xf10","xf11","xf12"};
+        String[] qualityNames = {"凡品","灵品","宝品","圣品","仙品","天品","神品"};
+        double[] qualityMulti = {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
+
+        if (pillIdx < 0 || pillIdx >= pillIds.length) return;
+        String id = pillIds[pillIdx];
+        PillData pd = getPillData(id);
+        if (pd == null) return;
+
+        boolean isLianti = id.startsWith("lt");
+        int playerRealmIdx = getPlayerRealmIndex(p, isLianti);
+        if (playerRealmIdx < pd.realmIndex) {
+            String req = isLianti ? getLantiRealmName(pd.realmIndex) : getXufaRealmName(pd.realmIndex);
+            p.sendMessage(colorize("&c境界不足，需要 " + req));
+            return;
+        }
+
+        int xp = (int)(pd.xpAmount * qualityMulti[qualityIdx]);
+        boolean success = addXpToPlayer(p, xp, isLianti);
+        if (!success) { p.sendMessage("&c给予修为失败"); return; }
+
+        item.setAmount(item.getAmount() - 1);
+        p.sendMessage("&a服用 " + qualityNames[qualityIdx] + pd.name + " 获得 " + xp + " 修为");
+    }
+
     private void usePill(Player p, PillData pill, ItemStack item) {
         boolean isLianti = liantiPills.containsValue(pill);
         int playerRealmIdx = getPlayerRealmIndex(p, isLianti);
