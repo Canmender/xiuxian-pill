@@ -208,7 +208,7 @@ public class AlchemyGUI implements Listener {
         for (String id : plugin.getAllPills().keySet()) {
             if (id.startsWith(prefix)) list.add(id);
         }
-        Collections.sort(list);
+        list.sort((a, b) -> Integer.compare(getRealmIndex(a), getRealmIndex(b)));
         return list;
     }
 
