@@ -199,20 +199,14 @@ public class AlchemyGUI implements Listener {
         String qName = craftManager.getQualityName(r.qualityIndex);
         String qColor = craftManager.getQualityColor(r.qualityIndex);
         giveXp(p, finalXp, id.startsWith("lt"));
-        // Give pill item from XiuXianItems
-        String[] qualityIds = {"white", "green", "blue", "purple", "gold", "red", "black"};
-        String pillItemId = "pill_" + id + "_" + qualityIds[r.qualityIndex];
-        try {
-            org.bukkit.plugin.Plugin itemsPlugin = Bukkit.getPluginManager().getPlugin("XiuXianItems");
-            if (itemsPlugin != null) {
-                Object itemStack = itemsPlugin.getClass().getMethod("getItemStack", String.class).invoke(itemsPlugin, pillItemId);
-                if (itemStack != null) {
-                    ((org.bukkit.inventory.ItemStack) itemStack).setAmount(1);
-                    p.getInventory().addItem((org.bukkit.inventory.ItemStack) itemStack);
-                }
+        // Give pill item
+        XiuXianPill.PillData pd = plugin.getPillData(id);
+        if (pd != null) {
+            org.bukkit.inventory.ItemStack pillItem = plugin.createPillItem(pd);
+            if (pillItem != null) {
+                pillItem.setAmount(1);
+                p.getInventory().addItem(pillItem);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         String pillName = (String) pill.get("name");
         p.sendMessage(qColor + "\u00a7l\u3010\u70bc\u4e39\u6210\u529f\u3011" + qColor + qName + pillName + "\uff0c\u83b7\u5f971\u9897");
