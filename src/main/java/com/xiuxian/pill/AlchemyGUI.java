@@ -177,10 +177,8 @@ public class AlchemyGUI implements Listener {
         String matId = (String) pill.get("material");
         int matCost = craftManager.getMaterialCost(ri);
         int moneyCost = craftManager.getMoneyCost(ri);
-        int playerMats = countMat(p, matId);
-        p.sendMessage("\u00a77[Debug] matId=" + matId + " have=" + playerMats + " need=" + matCost);
-        if (playerMats < matCost) {
-            p.sendMessage("\u00a7c\u8017\u6750\u4e0d\u8db3\uff01\u9700\u8981 " + matCost + " \u4e2a " + matId + " \u7f3a\u5c11 " + (matCost - playerMats));
+        if (countMat(p, matId) < matCost) {
+            p.sendMessage("\u00a7c\u8017\u6750\u4e0d\u8db3\uff01\u9700\u8981 " + matCost + " \u4e2a " + matId);
             return;
         }
         if (!hasMoney(p, moneyCost)) {
@@ -249,21 +247,7 @@ public class AlchemyGUI implements Listener {
         for (ItemStack it : p.getInventory().getContents()) {
             if (it == null) continue;
             String iid = getItemId(it);
-            if (matId.equals(iid)) {
-                c += it.getAmount();
-            }
-        }
-        // Debug: show first few items
-        int debugCount = 0;
-        for (ItemStack it : p.getInventory().getContents()) {
-            if (it == null || it.getType() == Material.AIR) continue;
-            if (debugCount >= 3) break;
-            ItemMeta meta = it.getItemMeta();
-            boolean hasCmd = meta != null && meta.hasCustomModelData();
-            int cmd = hasCmd ? meta.getCustomModelData() : -1;
-            String iid2 = getItemId(it);
-            p.sendMessage("\u00a77[DB] " + it.getType() + " cmd=" + cmd + " itemId=" + iid2 + " amt=" + it.getAmount());
-            debugCount++;
+            if (matId.equals(iid)) c += it.getAmount();
         }
         return c;
     }
