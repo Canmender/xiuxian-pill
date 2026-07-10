@@ -46,6 +46,7 @@ public class AlchemyGUI implements Listener {
     private void showOverview(Player p) {
         inDetail.put(p.getUniqueId(), false);
         Inventory inv = Bukkit.createInventory(new Holder(), 54, T_OVERVIEW);
+        glass(inv);
 
         // Row 0: Alchemist info
         drawAlchemistRow(inv, p, 0);
@@ -53,15 +54,15 @@ public class AlchemyGUI implements Listener {
         // Row 1-2: 体修 (13 pills -> 9 in row1, 4 in row2)
         List<String> lt = getPillsByType("lt");
         for (int i = 0; i < lt.size(); i++) {
-            int slot = (i < 9) ? (9 + i) : (18 + i - 9);
+            int slot = (i < 9) ? (9 + i) : (19 + i - 9);
             inv.setItem(slot, makePillIcon(lt.get(i)));
         }
-        inv.setItem(18, label("\u00a7a\u00a7l\u25b6 \u4f53\u4fee"));
+        inv.setItem(18, label("\u00a7a\u00a7l\u4f53\u4fee"));
 
         // Row 3-4: 法修 (13 pills -> 9 in row3, 4 in row4)
         List<String> xf = getPillsByType("xf");
         for (int i = 0; i < xf.size(); i++) {
-            int slot = (i < 9) ? (27 + i) : (36 + i - 9);
+            int slot = (i < 9) ? (27 + i) : (37 + i - 9);
             inv.setItem(slot, makePillIcon(xf.get(i)));
         }
         inv.setItem(36, label("\u00a7b\u00a7l\u25b6 \u6cd5\u4fee"));
@@ -84,6 +85,7 @@ public class AlchemyGUI implements Listener {
         inDetail.put(p.getUniqueId(), true);
         selectedPill.put(p.getUniqueId(), id);
         Inventory inv = Bukkit.createInventory(new Holder(), 54, T_CRAFT);
+        glass(inv);
 
         Map<String, Object> pill = plugin.getAllPills().get(id);
         if (pill == null) return;
@@ -174,7 +176,7 @@ public class AlchemyGUI implements Listener {
             if (item == null) return;
             ItemMeta m = item.getItemMeta();
             if (m == null || !m.hasDisplayName()) {
-                if (s == 49) p.closeInventory();
+                if (s == 8) p.closeInventory();
                 return;
             }
             String name = m.getDisplayName();
@@ -187,8 +189,8 @@ public class AlchemyGUI implements Listener {
         } else {
             // Detail
             if (s == 40) doCraft(p, selectedPill.getOrDefault(u, ""));
-            else if (s == 48) showOverview(p);
-            else if (s == 49) p.closeInventory();
+            else if (s == 7) showOverview(p);
+            else if (s == 8) p.closeInventory();
         }
     }
 
@@ -355,6 +357,15 @@ public class AlchemyGUI implements Listener {
             it.setItemMeta(m);
         }
         return it;
+    }
+
+    private void glass(Inventory inv) {
+        ItemStack g = new ItemStack(Material.WHITE_STAINED_GLASS_PANE);
+        ItemMeta gm = g.getItemMeta();
+        if (gm != null) { gm.setDisplayName(" "); g.setItemMeta(gm); }
+        for (int i = 0; i < 54; i++) {
+            if (inv.getItem(i) == null) inv.setItem(i, g);
+        }
     }
 
     public static class Holder implements InventoryHolder {
