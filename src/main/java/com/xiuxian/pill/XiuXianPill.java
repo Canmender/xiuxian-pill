@@ -382,16 +382,16 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
             }
         }
         for (PillData pill : liantiPills.values()) {
-            if (pill.material == material && pill.name.equals(cleanName)) return pill;
+            if (pill.name.equals(cleanName)) return pill;
         }
         for (PillData pill : xiufaPills.values()) {
-            if (pill.material == material && pill.name.equals(cleanName)) return pill;
+            if (pill.name.equals(cleanName)) return pill;
         }
         return null;
     }
 
     public ItemStack createPillItem(PillData pill, int qualityIndex) {
-        ItemStack item = new ItemStack(pill.material);
+        ItemStack item = new ItemStack(Material.POTION);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             String[] qNames = {"凡品", "灵品", "宝品", "圣品", "仙品", "天品", "神品"};
