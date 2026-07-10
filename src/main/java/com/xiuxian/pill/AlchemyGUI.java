@@ -296,17 +296,25 @@ public class AlchemyGUI implements Listener {
 
     private boolean hasMoney(Player p, int amt) {
         try {
-            net.milkbowl.vault.economy.Economy eco = getVaultEconomy();
-            if (eco != null) return eco.has(p, amt);
-        } catch (Exception e) {}
+            Class<?> apiClass = Class.forName("me.yic.xconomy.api.XConomyAPI");
+            java.lang.reflect.Method getBalance = apiClass.getMethod("getBalance", java.util.UUID.class);
+            java.math.BigDecimal bal = (java.math.BigDecimal) getBalance.invoke(null, p.getUniqueId());
+            return bal != null && bal.doubleValue() >= amt;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     private void payMoney(Player p, int amt) {
         try {
-            net.milkbowl.vault.economy.Economy eco = getVaultEconomy();
-            if (eco != null) eco.withdrawPlayer(p, amt);
-        } catch (Exception e) {}
+            Class<?> apiClass = Class.forName("me.yic.xconomy.api.XConomyAPI");
+            java.lang.reflect.Method change = apiClass.getMethod("changePlayerBalance", java.util.UUID.class, String.class);
+            java.math.BigDecimal neg = new java.math.BigDecimal(-amt);
+            change.invoke(null, p.getUniqueId(), neg.toPlainString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void giveXp(Player p, int amt, boolean lianti) {
@@ -330,16 +338,6 @@ public class AlchemyGUI implements Listener {
             it.setItemMeta(m);
         }
         return it;
-    }
-
-    private net.milkbowl.vault.economy.Economy getVaultEconomy() {
-        try {
-            org.bukkit.plugin.Plugin vault = Bukkit.getPluginManager().getPlugin("Vault");
-            if (vault == null) return null;
-            java.lang.reflect.Method getEconomy = vault.getClass().getMethod("getEconomy");
-            return (net.milkbowl.vault.economy.Economy) getEconomy.invoke(vault);
-        } catch (Exception e) {}
-        return null;
     }
 
     private void glass(Inventory inv) {
