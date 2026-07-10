@@ -207,29 +207,33 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (event.getHand() != EquipmentSlot.HAND) return;
-
         Player p = event.getPlayer();
         ItemStack item = p.getInventory().getItemInMainHand();
         if (item == null || item.getType() == Material.AIR) return;
-
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
-        // Check if holding alchemy furnace
+        // Furnace: use RIGHT_CLICK_AIR or RIGHT_CLICK_BLOCK
         if (meta.hasCustomModelData() && meta.getCustomModelData() == 14001) {
-            event.setCancelled(true);
-            alchemyGUI.open(p);
+            if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                event.setCancelled(true);
+                alchemyGUI.open(p);
+            }
             return;
         }
 
-        // Original pill use logic
-        if (!meta.hasDisplayName()) return;
-        PillData pill = findPill(meta.getDisplayName(), item.getType());
-        if (pill != null) {
-            event.setCancelled(true);
-            usePill(p, pill, item);
+        // Paper 1.21.4: PAPER items don't fire RIGHT_CLICK_AIR
+        // Use cooldown trick: set use cooldown, next tick check if it triggered
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (!meta.hasDisplayName()) return;
+            PillData pill = findPill(meta.getDisplayName(), item.getType());
+            if (pill != null) {
+                event.setCancelled(true);
+                // Prevent eating/drinking animation
+                p.setCooldown(Material.PAPER, 20);
+                usePill(p, pill, item);
+            }
         }
     }
 
