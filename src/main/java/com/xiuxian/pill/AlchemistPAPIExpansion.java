@@ -1,6 +1,7 @@
 package com.xiuxian.pill;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class AlchemistPAPIExpansion extends PlaceholderExpansion {
@@ -28,17 +29,25 @@ public class AlchemistPAPIExpansion extends PlaceholderExpansion {
             case "alchemist_xp": return String.valueOf(am.getXp(player.getUniqueId()));
             case "alchemist_xp_needed": return String.valueOf(am.getXpToNext(player.getUniqueId()));
             case "alchemist_bonus": return String.format("%.0f", am.getBonus(player.getUniqueId()) * 100);
-            // Balance from XConomy
             case "balance":
             case "money":
+            case "lingshi":
                 try {
-                    Class<?> apiClass = Class.forName("me.yic.xconomy.api.XConomyAPI");
-                    java.lang.reflect.Method getPlayerData = apiClass.getMethod("getPlayerData", java.util.UUID.class);
-                    Object playerData = getPlayerData.invoke(null, player.getUniqueId());
-                    if (playerData != null) {
-                        java.lang.reflect.Method getBalance = playerData.getClass().getMethod("getBalance");
-                        java.math.BigDecimal bal = (java.math.BigDecimal) getBalance.invoke(playerData);
-                        return bal != null ? bal.toPlainString() : "0";
+                    org.bukkit.plugin.Plugin ecoPlugin = Bukkit.getPluginManager().getPlugin("XiuXianEco");
+                    if (ecoPlugin != null) {
+                        com.xiuxian.eco.EcoManager eco = ((com.xiuxian.eco.XiuXianEco) ecoPlugin).getEcoManager();
+                        double bal = eco.getBalance(player, "lingshi");
+                        return String.valueOf((long) bal);
+                    }
+                } catch (Exception e) {}
+                return "0";
+            case "xianyuan":
+                try {
+                    org.bukkit.plugin.Plugin ecoPlugin2 = Bukkit.getPluginManager().getPlugin("XiuXianEco");
+                    if (ecoPlugin2 != null) {
+                        com.xiuxian.eco.EcoManager eco2 = ((com.xiuxian.eco.XiuXianEco) ecoPlugin2).getEcoManager();
+                        double bal2 = eco2.getBalance(player, "xianyuan");
+                        return String.valueOf((long) bal2);
                     }
                 } catch (Exception e) {}
                 return "0";

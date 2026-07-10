@@ -307,14 +307,12 @@ public class AlchemyGUI implements Listener {
 
     private void payMoney(Player p, int amt) {
         try {
-            Class<?> apiClass = Class.forName("me.yic.xconomy.api.XConomyAPI");
-            java.lang.reflect.Method change = apiClass.getMethod("changePlayerBalance", java.util.UUID.class, String.class);
-            java.math.BigDecimal neg = new java.math.BigDecimal("-" + amt);
-            change.invoke(null, p.getUniqueId(), neg.toPlainString());
-        } catch (Exception e) {
-            // Fallback: use command
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "xconomy take " + p.getName() + " " + amt);
-        }
+            org.bukkit.plugin.Plugin ecoPlugin = Bukkit.getPluginManager().getPlugin("XiuXianEco");
+            if (ecoPlugin != null) {
+                com.xiuxian.eco.EcoManager eco = ((com.xiuxian.eco.XiuXianEco) ecoPlugin).getEcoManager();
+                eco.removeBalance(p, "lingshi", amt);
+            }
+        } catch (Exception e) {}
     }
 
     private void giveXp(Player p, int amt, boolean lianti) {
