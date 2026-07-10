@@ -198,7 +198,6 @@ public class AlchemyGUI implements Listener {
         int finalXp = (int)(baseXp * craftManager.getXpMult(r.qualityIndex));
         String qName = craftManager.getQualityName(r.qualityIndex);
         String qColor = craftManager.getQualityColor(r.qualityIndex);
-        giveXp(p, finalXp, id.startsWith("lt"));
         // Give pill item
         XiuXianPill.PillData pd = plugin.getPillData(id);
         if (pd != null) {
@@ -209,7 +208,7 @@ public class AlchemyGUI implements Listener {
             }
         }
         String pillName = (String) pill.get("name");
-        p.sendMessage(qColor + "\u00a7l\u3010\u70bc\u4e39\u6210\u529f\u3011" + qColor + qName + pillName + "\uff0c\u83b7\u5f971\u9897");
+        p.sendMessage(qColor + "\u00a7l\u3010\u70bc\u4e39\u6210\u529f\u3011" + qColor + qName + pillName + " x1");
         alchemistManager.addXp(p, r.alchemistXp);
     }
 
