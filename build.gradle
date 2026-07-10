@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.xiuxian'
-version = '1.0.0'
+version = '2.4.0'
 description = 'XiuXianPill - MC cultivation server plugin'
 
 java {
