@@ -35,39 +35,29 @@ public class AlchemyGUI implements Listener {
 
     public void open(Player p) { showOverview(p); }
 
-    // ==================== OVERVIEW ====================
-
     private void showOverview(Player p) {
         inDetail.put(p.getUniqueId(), false);
         Inventory inv = Bukkit.createInventory(new Holder(), 54, T_OVERVIEW);
         glass(inv);
-
-        // Row 0: Alchemist info (slot 4)
         drawAlchemistRow(inv, p, 0);
+        inv.setItem(8, closeBtn());
 
-        // Close button at slot 8 (top-right)
-        inv.setItem(8, createItem(Material.BARRIER, "\u00a7c\u5173\u95ed"));
-
-        // Row 1-2: 体修 (13 pills)
         List<String> lt = getPillsByType("lt");
+        inv.setItem(9, sectionLabel("\u00a7a\u00a7l\u4f53\u4fee"));
         for (int i = 0; i < lt.size(); i++) {
-            int slot = (i < 9) ? (9 + i) : (19 + i - 9);
+            int slot = (i < 8) ? (10 + i) : (19 + i - 8);
             inv.setItem(slot, makePillIcon(lt.get(i)));
         }
-        inv.setItem(18, label("\u00a7a\u00a7l\u4f53\u4fee"));
 
-        // Row 3-4: 法修 (13 pills)
         List<String> xf = getPillsByType("xf");
+        inv.setItem(27, sectionLabel("\u00a7b\u00a7l\u6cd5\u4fee"));
         for (int i = 0; i < xf.size(); i++) {
-            int slot = (i < 9) ? (27 + i) : (37 + i - 9);
+            int slot = (i < 8) ? (28 + i) : (37 + i - 8);
             inv.setItem(slot, makePillIcon(xf.get(i)));
         }
-        inv.setItem(36, label("\u00a7b\u00a7l\u6cd5\u4fee"));
 
         p.openInventory(inv);
     }
-
-    // ==================== CRAFT DETAIL ====================
 
     private void showCraft(Player p, String id) {
         inDetail.put(p.getUniqueId(), true);
@@ -82,12 +72,10 @@ public class AlchemyGUI implements Listener {
         int moneyCost = craftManager.getMoneyCost(ri);
         String matId = (String) pill.get("material");
 
-        // Row 0: Alchemist (slot 4) + Back (slot 7) + Close (slot 8)
         drawAlchemistRow(inv, p, 0);
-        inv.setItem(7, createItem(Material.ARROW, "\u00a7e\u8fd4\u56de"));
-        inv.setItem(8, createItem(Material.BARRIER, "\u00a7c\u5173\u95ed"));
+        inv.setItem(7, backBtn());
+        inv.setItem(8, closeBtn());
 
-        // Row 1: Pill info (slot 13)
         inv.setItem(13, createItem(Material.POTION,
             "\u00a7e\u00a7l" + pill.get("name"),
             "\u00a77\u5883\u754c: \u00a7e" + getRealm(id),
@@ -95,7 +83,6 @@ public class AlchemyGUI implements Listener {
             "\u00a77\u8017\u6750: \u00a7e" + matId + " x" + matCost,
             "\u00a77\u7075\u77f3: \u00a7e" + moneyCost));
 
-        // Row 2: Quality table (slots 19-27)
         String[][] q = {{"\u00a77\u51e1\u54c1","40%","1x"},{"\u00a7a\u7075\u54c1","25%","2x"},
             {"\u00a7b\u5b9d\u54c1","15%","4x"},{"\u00a76\u5723\u54c1","10%","8x"},
             {"\u00a75\u4ed9\u54c1","5%","16x"},{"\u00a7c\u5929\u54c1","3%","32x"},
@@ -104,33 +91,25 @@ public class AlchemyGUI implements Listener {
             inv.setItem(19 + i, createItem(Material.PAPER,
                 q[i][0], "\u00a77\u6982\u7387: \u00a7e" + q[i][1], "\u00a77\u500d\u7387: \u00a7a" + q[i][2]));
         }
-        inv.setItem(27, createItem(Material.BARRIER, "\u00a7c\u62a5\u5e9f 1%"));
+        inv.setItem(27, scrapBtn());
 
-        // Row 3: Cost (slots 30, 32)
         inv.setItem(30, createItem(Material.PAPER, "\u00a77\u6240\u9700\u8017\u6750", "\u00a7e" + matId + " x" + matCost));
         inv.setItem(32, createItem(Material.GOLD_NUGGET, "\u00a77\u6240\u9700\u7075\u77f3", "\u00a7e" + moneyCost));
-
-        // Row 4: Craft button (slot 40)
-        inv.setItem(40, createItem(Material.FIRE_CHARGE, "\u00a7c\u00a7l\u25b6 \u5f00\u59cb\u70bc\u5236"));
+        inv.setItem(40, craftBtn());
 
         p.openInventory(inv);
     }
 
-    // ==================== ALCHEMIST BAR ====================
-
     private void drawAlchemistRow(Inventory inv, Player p, int startSlot) {
-        int lv = alchemistManager.getLevel(p.getUniqueId());
         int xp = alchemistManager.getXp(p.getUniqueId());
         int xpMax = alchemistManager.getXpToNext(p.getUniqueId());
         String name = alchemistManager.getName(p.getUniqueId());
         double bonus = alchemistManager.getBonus(p.getUniqueId());
-        String progress = bar(xp, xpMax, 20);
-
         inv.setItem(startSlot + 4, createItem(Material.BREWING_STAND,
             "\u00a76\u00a7l\u2550\u2550\u2550 \u70bc\u4e39\u5e08 \u2550\u2550\u2550",
             "",
             " \u00a77\u7b49\u7ea7: \u00a7e" + name + "    \u00a77XP: \u00a7e" + xp + "/" + xpMax,
-            " \u00a7a" + progress,
+            " \u00a7a" + bar(xp, xpMax, 20),
             "",
             " \u00a77\u9ad8\u54c1\u8d28\u52a0\u6210: \u00a7a+" + (int)(bonus*100) + "%",
             " \u00a78\u6bcf\u6b21\u70bc\u4e39\u6210\u529f +1~10 XP"));
@@ -144,7 +123,11 @@ public class AlchemyGUI implements Listener {
         return s.toString() + "\u00a77]";
     }
 
-    // ==================== EVENTS ====================
+    private ItemStack closeBtn() { return createItem(Material.BARRIER, "\u00a7c\u5173\u95ed"); }
+    private ItemStack backBtn() { return createItem(Material.ARROW, "\u00a7e\u8fd4\u56de\u603b\u89c8"); }
+    private ItemStack scrapBtn() { return createItem(Material.BARRIER, "\u00a7c\u62a5\u5e9f 1%"); }
+    private ItemStack craftBtn() { return createItem(Material.FIRE_CHARGE, "\u00a7c\u00a7l\u25b6 \u5f00\u59cb\u70bc\u5236"); }
+    private ItemStack sectionLabel(String name) { return createItem(Material.PAPER, name); }
 
     @EventHandler
     public void onClick(InventoryClickEvent e) {
@@ -154,21 +137,13 @@ public class AlchemyGUI implements Listener {
         Player p = (Player) e.getWhoClicked();
         int s = e.getRawSlot();
         if (s < 0 || s >= 54) return;
-
         UUID u = p.getUniqueId();
-        boolean detail = inDetail.getOrDefault(u, false);
-
-        if (!detail) {
-            // ===== OVERVIEW MODE =====
-            // Slot 8: Close button
+        if (!inDetail.getOrDefault(u, false)) {
             if (s == 8) { p.closeInventory(); return; }
-
-            // Slots 9-22, 27-44: Pill icons - find by name
             ItemStack item = e.getInventory().getItem(s);
             if (item == null) return;
             ItemMeta m = item.getItemMeta();
             if (m == null || !m.hasDisplayName()) return;
-
             String clickedName = m.getDisplayName();
             for (Map.Entry<String, Map<String, Object>> en : plugin.getAllPills().entrySet()) {
                 if (clickedName.equals(en.getValue().get("name"))) {
@@ -177,7 +152,6 @@ public class AlchemyGUI implements Listener {
                 }
             }
         } else {
-            // ===== DETAIL MODE =====
             switch (s) {
                 case 40: doCraft(p, selectedPill.getOrDefault(u, "")); break;
                 case 7:  showOverview(p); break;
@@ -186,12 +160,8 @@ public class AlchemyGUI implements Listener {
         }
     }
 
-    // FIX: Don't reset state on close - only on quit
-    // This prevents the "switching screens resets state" bug
     @EventHandler
-    public void onClose(InventoryCloseEvent e) {
-        // Intentionally empty - state persists until quit or new GUI open
-    }
+    public void onClose(InventoryCloseEvent e) { }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
@@ -200,8 +170,6 @@ public class AlchemyGUI implements Listener {
         selectedPill.remove(u);
     }
 
-    // ==================== CRAFT ====================
-
     private void doCraft(Player p, String id) {
         Map<String, Object> pill = plugin.getAllPills().get(id);
         if (pill == null) return;
@@ -209,7 +177,6 @@ public class AlchemyGUI implements Listener {
         String matId = (String) pill.get("material");
         int matCost = craftManager.getMaterialCost(ri);
         int moneyCost = craftManager.getMoneyCost(ri);
-
         if (countMat(p, matId) < matCost) {
             p.sendMessage("\u00a7c\u8017\u6750\u4e0d\u8db3\uff01\u9700\u8981 " + matCost + " \u4e2a " + matId);
             return;
@@ -220,27 +187,21 @@ public class AlchemyGUI implements Listener {
         }
         removeMat(p, matId, matCost);
         payMoney(p, moneyCost);
-
         double bonus = alchemistManager.getBonus(p.getUniqueId());
         PillCraftingManager.CraftResult r = craftManager.craft(ri, bonus);
-
         if (!r.success) {
             p.sendMessage("\u00a7c\u00a7l\u3010\u7206\u5e9f\u3011\u00a77\u4e39\u836f\u7206\u70b8\uff0c\u6750\u6599\u6d6a\u8d39\uff01");
             alchemistManager.addXp(p, 1 + new Random().nextInt(3));
             return;
         }
-
         int baseXp = (int) pill.get("xp-amount");
         int finalXp = (int)(baseXp * craftManager.getXpMult(r.qualityIndex));
         String qName = craftManager.getQualityName(r.qualityIndex);
         String qColor = craftManager.getQualityColor(r.qualityIndex);
-
         giveXp(p, finalXp, id.startsWith("lt"));
         p.sendMessage(qColor + "\u00a7l\u3010\u70bc\u4e39\u6210\u529f\u3011" + qColor + qName + "\u7075\u4e39\uff0c\u83b7\u5f97 \u00a7e" + finalXp + " \u00a77\u4fee\u4e3a");
         alchemistManager.addXp(p, r.alchemistXp);
     }
-
-    // ==================== HELPERS ====================
 
     private List<String> getPillsByType(String prefix) {
         List<String> list = new ArrayList<>();
@@ -258,24 +219,18 @@ public class AlchemyGUI implements Listener {
         int xp = (int) p.get("xp-amount");
         String mat = (String) p.get("material");
         String realm = getRealm(id);
-
         Material icon;
         if (xp <= 200) icon = Material.COAL;
         else if (xp <= 1500) icon = Material.COAL_BLOCK;
         else if (xp <= 8000) icon = Material.IRON_INGOT;
         else if (xp <= 35000) icon = Material.GOLD_INGOT;
         else icon = Material.DIAMOND;
-
         return createItem(icon, name,
             "\u00a77\u5883\u754c: \u00a7e" + realm,
             "\u00a77\u4fee\u4e3a: \u00a7a+" + xp,
             "\u00a77\u8017\u6750: \u00a7e" + mat,
             "",
             "\u00a7e\u70b9\u51fb\u70bc\u5236");
-    }
-
-    private ItemStack label(String name) {
-        return createItem(Material.PAPER, name);
     }
 
     private String getRealm(String id) {
