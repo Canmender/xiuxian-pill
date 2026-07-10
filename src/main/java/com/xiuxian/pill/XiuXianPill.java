@@ -47,7 +47,7 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
         craftManager.loadConfig(getConfig());
         alchemyGUI = new AlchemyGUI(this);
 
-        // Register PAPI expansion
+        // Register PAPI expansions
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new AlchemistPAPIExpansion(this).register();
             getLogger().info("PAPI expansion registered");

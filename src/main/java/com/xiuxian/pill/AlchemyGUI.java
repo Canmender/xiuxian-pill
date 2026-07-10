@@ -281,8 +281,11 @@ public class AlchemyGUI implements Listener {
     private boolean hasMoney(Player p, int amt) {
         try {
             Class<?> apiClass = Class.forName("me.yic.xconomy.api.XConomyAPI");
-            java.lang.reflect.Method getBalance = apiClass.getMethod("getBalance", java.util.UUID.class);
-            java.math.BigDecimal bal = (java.math.BigDecimal) getBalance.invoke(null, p.getUniqueId());
+            java.lang.reflect.Method getPlayerData = apiClass.getMethod("getPlayerData", java.util.UUID.class);
+            Object playerData = getPlayerData.invoke(null, p.getUniqueId());
+            if (playerData == null) return false;
+            java.lang.reflect.Method getBalance = playerData.getClass().getMethod("getBalance");
+            java.math.BigDecimal bal = (java.math.BigDecimal) getBalance.invoke(playerData);
             return bal != null && bal.doubleValue() >= amt;
         } catch (Exception e) {
             e.printStackTrace();
@@ -294,7 +297,7 @@ public class AlchemyGUI implements Listener {
         try {
             Class<?> apiClass = Class.forName("me.yic.xconomy.api.XConomyAPI");
             java.lang.reflect.Method change = apiClass.getMethod("changePlayerBalance", java.util.UUID.class, String.class);
-            java.math.BigDecimal neg = new java.math.BigDecimal(-amt);
+            java.math.BigDecimal neg = new java.math.BigDecimal("-" + amt);
             change.invoke(null, p.getUniqueId(), neg.toPlainString());
         } catch (Exception e) {
             e.printStackTrace();
