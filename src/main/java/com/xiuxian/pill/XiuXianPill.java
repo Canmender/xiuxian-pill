@@ -332,7 +332,7 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
         return null;
     }
 
-    private ItemStack createPillItem(PillData pill) {
+    public ItemStack createPillItem(PillData pill) {
         ItemStack item = new ItemStack(pill.material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
