@@ -285,22 +285,13 @@ public class AlchemyGUI implements Listener {
 
     private double getPlayerBalance(Player p) {
         try {
-            Class<?> apiClass = Class.forName("me.yic.xconomy.api.XConomyAPI");
-            // Try UUID first
-            java.lang.reflect.Method getPlayerData = apiClass.getMethod("getPlayerData", java.util.UUID.class);
-            Object playerData = getPlayerData.invoke(null, p.getUniqueId());
-            // If null, try with name
-            if (playerData == null) {
-                getPlayerData = apiClass.getMethod("getPlayerData", String.class);
-                playerData = getPlayerData.invoke(null, p.getName());
-            }
-            if (playerData != null) {
-                java.lang.reflect.Method getBalance = playerData.getClass().getMethod("getBalance");
-                java.math.BigDecimal bal = (java.math.BigDecimal) getBalance.invoke(playerData);
-                if (bal != null) return bal.doubleValue();
+            org.bukkit.plugin.Plugin ecoPlugin = Bukkit.getPluginManager().getPlugin("XiuXianEco");
+            if (ecoPlugin != null) {
+                Object ecoManager = ecoPlugin.getClass().getMethod("getEcoManager").invoke(ecoPlugin);
+                return (double) ecoManager.getClass().getMethod("getBalance", org.bukkit.entity.Player.class, String.class).invoke(ecoManager, p, "lingshi");
             }
         } catch (Exception e) {
-            // Silent fallback
+            e.printStackTrace();
         }
         return 0;
     }
