@@ -198,17 +198,7 @@ public class AlchemyGUI implements Listener {
         int finalXp = (int)(baseXp * craftManager.getXpMult(r.qualityIndex));
         String qName = craftManager.getQualityName(r.qualityIndex);
         String qColor = craftManager.getQualityColor(r.qualityIndex);
-        // Give pill item
-        XiuXianPill.PillData pd = plugin.getPillData(id);
-        if (pd != null) {
-            org.bukkit.inventory.ItemStack pillItem = plugin.createPillItem(pd, r.qualityIndex);
-            if (pillItem != null) {
-                pillItem.setAmount(1);
-                p.getInventory().addItem(pillItem);
-            }
-        }
-        String pillName = (String) pill.get("name");
-        p.sendMessage(qColor + "\u00a7l\u3010\u70bc\u4e39\u6210\u529f\u3011" + qColor + qName + pillName + " x1");
+        String pillName = (String) pill.get("name"); p.sendMessage(qColor + "\u00a7l\u3010\u70bc\u4e39\u6210\u529f\u3011" + qColor + qName + pillName + " x1");
         alchemistManager.addXp(p, r.alchemistXp);
     }
 

@@ -207,33 +207,29 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (event.getHand() != EquipmentSlot.HAND) return;
+
         Player p = event.getPlayer();
         ItemStack item = p.getInventory().getItemInMainHand();
         if (item == null || item.getType() == Material.AIR) return;
+
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
-        // Furnace: use RIGHT_CLICK_AIR or RIGHT_CLICK_BLOCK
+        // Check if holding alchemy furnace
         if (meta.hasCustomModelData() && meta.getCustomModelData() == 14001) {
-            if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                event.setCancelled(true);
-                alchemyGUI.open(p);
-            }
+            event.setCancelled(true);
+            alchemyGUI.open(p);
             return;
         }
 
-        // Paper 1.21.4: PAPER items don't fire RIGHT_CLICK_AIR
-        // Use cooldown trick: set use cooldown, next tick check if it triggered
-        if (event.getAction() == Action.RIGHT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_AIR) {
-            if (!meta.hasDisplayName()) return;
-            PillData pill = findPill(meta.getDisplayName(), item.getType());
-            if (pill != null) {
-                event.setCancelled(true);
-                // Prevent eating/drinking animation
-                p.setCooldown(Material.PAPER, 20);
-                usePill(p, pill, item);
-            }
+        // Original pill use logic
+        if (!meta.hasDisplayName()) return;
+        PillData pill = findPill(meta.getDisplayName(), item.getType());
+        if (pill != null) {
+            event.setCancelled(true);
+            usePill(p, pill, item);
         }
     }
 
@@ -283,66 +279,28 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
         usePill(p, pill, item);
     }
 
-    private void useXiuXianItemsPill(Player p, ItemStack item, int cmd) {
-        // cmd 20001-20182 -> pill index 0-181
-        int idx = cmd - 20001;
-        int pillIdx = idx / 7;  // 26 pill types
-        int qualityIdx = idx % 7;  // 7 qualities
-
-        String[] pillIds = {"lt0","lt1","lt2","lt3","lt4","lt5","lt6","lt7","lt8","lt9","lt10","lt11","lt12",
-                            "xf0","xf1","xf2","xf3","xf4","xf5","xf6","xf7","xf8","xf9","xf10","xf11","xf12"};
-        String[] qualityNames = {"凡品","灵品","宝品","圣品","仙品","天品","神品"};
-        double[] qualityMulti = {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
-
-        if (pillIdx < 0 || pillIdx >= pillIds.length) return;
-        String id = pillIds[pillIdx];
-        PillData pd = getPillData(id);
-        if (pd == null) return;
-
-        boolean isLianti = id.startsWith("lt");
-        int playerRealmIdx = getPlayerRealmIndex(p, isLianti);
-        if (playerRealmIdx < pd.realmIndex) {
-            String req = isLianti ? getLantiRealmName(pd.realmIndex) : getXufaRealmName(pd.realmIndex);
-            p.sendMessage(colorize("&c境界不足，需要 " + req));
-            return;
-        }
-
-        int xp = (int)(pd.xpAmount * qualityMulti[qualityIdx]);
-        boolean success = addXpToPlayer(p, xp, isLianti);
-        if (!success) { p.sendMessage("&c给予修为失败"); return; }
-
-        item.setAmount(item.getAmount() - 1);
-        p.sendMessage("&a服用 " + qualityNames[qualityIdx] + pd.name + " 获得 " + xp + " 修为");
-    }
-
     private void usePill(Player p, PillData pill, ItemStack item) {
-        // Read quality from display name
         String displayName = item.getItemMeta() != null ? item.getItemMeta().getDisplayName() : "";
         int qualityIndex = 0;
-        String[] qPrefixes = {"[凡品]", "[灵品]", "[宝品]", "[圣品]", "[仙品]", "[天品]", "[神品]"};
-        double[] qMultipliers = {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
-        for (int i = 0; i < qPrefixes.length; i++) {
-            if (displayName.contains(qPrefixes[i])) {
-                qualityIndex = i;
-                break;
-            }
+        String[] qCheck = {"\u00a77", "\u00a7a", "\u00a7b", "\u00a76", "\u00a75", "\u00a7c", "\u00a74"};
+        double[] qMulti = {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
+        for (int i = 0; i < qCheck.length; i++) {
+            if (displayName.startsWith(qCheck[i])) { qualityIndex = i; break; }
         }
 
         boolean isLianti = liantiPills.containsValue(pill);
         int playerRealmIdx = getPlayerRealmIndex(p, isLianti);
-
         if (playerRealmIdx < pill.realmIndex) {
             String requiredRealm = isLianti ? getLantiRealmName(pill.realmIndex) : getXufaRealmName(pill.realmIndex);
             p.sendMessage(colorize(getConfig().getString("realm-too-high-message", "\u5883\u754c\u4e0d\u8db3").replace("{required_realm}", requiredRealm)));
             return;
         }
 
-        int finalXp = (int)(pill.xpAmount * qMultipliers[qualityIndex]);
+        int finalXp = (int)(pill.xpAmount * qMulti[qualityIndex]);
         boolean success = addXpToPlayer(p, finalXp, isLianti);
         if (!success) { p.sendMessage("\u00a7c\u7ed9\u4e88\u4fee\u4e3a\u5931\u8d25"); return; }
-
         item.setAmount(item.getAmount() - 1);
-        String[] qNames = {"凡品", "灵品", "宝品", "圣品", "仙品", "天品", "神品"};
+        String[] qNames = {"\u51e1\u54c1", "\u7075\u54c1", "\u5b9d\u54c1", "\u5723\u54c1", "\u4ed9\u54c1", "\u5929\u54c1", "\u795e\u54c1"};
         p.sendMessage("\u00a7a\u670d\u7528 " + qNames[qualityIndex] + pill.name + " \u83b7\u5f97 " + finalXp + " \u4fee\u4e3a");
     }
 
@@ -372,40 +330,21 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
     }
 
     private PillData findPill(String displayName, Material material) {
-        // Strip quality prefix like [灵品] before matching
-        String cleanName = displayName;
-        String[] prefixes = {"[凡品]", "[灵品]", "[宝品]", "[圣品]", "[仙品]", "[天品]", "[神品]"};
-        for (String p : prefixes) {
-            if (cleanName.startsWith(p)) {
-                cleanName = cleanName.substring(p.length());
-                break;
-            }
-        }
         for (PillData pill : liantiPills.values()) {
-            if (pill.name.equals(cleanName)) return pill;
+            if (pill.material == material && pill.name.equals(displayName)) return pill;
         }
         for (PillData pill : xiufaPills.values()) {
-            if (pill.name.equals(cleanName)) return pill;
+            if (pill.material == material && pill.name.equals(displayName)) return pill;
         }
         return null;
     }
 
-    public ItemStack createPillItem(PillData pill, int qualityIndex) {
-        ItemStack item = new ItemStack(Material.POTION);
+    private ItemStack createPillItem(PillData pill, int qualityIndex) {
+        ItemStack item = new ItemStack(pill.material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            String[] qNames = {"凡品", "灵品", "宝品", "圣品", "仙品", "天品", "神品"};
-            String[] qColors = {"\u00a77", "\u00a7a", "\u00a7b", "\u00a76", "\u00a75", "\u00a7c", "\u00a74"};
-            String qName = qualityIndex >= 0 && qualityIndex < 7 ? qNames[qualityIndex] : "";
-            String qColor = qualityIndex >= 0 && qualityIndex < 7 ? qColors[qualityIndex] : "\u00a77";
-            meta.setDisplayName(qColor + "[" + qName + "]" + pill.name);
+            String[] qNames = {"\u00a77\u51e1\u54c1", "\u00a7a\u7075\u54c1", "\u00a7b\u5b9d\u54c1", "\u00a76\u5723\u54c1", "\u00a75\u4ed9\u54c1", "\u00a7c\u5929\u54c1", "\u00a74\u795e\u54c1"}; String qN = (qualityIndex >= 0 && qualityIndex < 7) ? qNames[qualityIndex] : ""; meta.setDisplayName(qN + pill.name);
             List<String> lore = new ArrayList<>();
-            if (qualityIndex >= 0 && qualityIndex < 7) {
-                double[] multipliers = {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
-                lore.add(qColor + "品级: " + qName);
-                lore.add("\u00a77修为: \u00a7a+" + (int)(pill.xpAmount * multipliers[qualityIndex]));
-                lore.add("\u00a77境界: \u00a7e" + pill.realm);
-            }
             lore.add(colorize(pill.description));
             lore.add(colorize("\u00a77\u5883\u754c: " + pill.realm));
             lore.add(colorize("\u00a77\u4fee\u4e3a: +" + pill.xpAmount));
