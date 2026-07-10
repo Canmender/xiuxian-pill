@@ -1,5 +1,5 @@
 name: XiuXianPill
-version: 2.0
+version: 2.3
 main: com.xiuxian.pill.XiuXianPill
 api-version: 1.21
 softdepend:
@@ -9,12 +9,12 @@ softdepend:
   - PlaceholderAPI
 commands:
   pill:
-    description: 丹药系统
-    usage: /pill [use|give|list|reload|craft|recipes|alchemist]
+    description: Alchemy system
+    usage: /pill [use|give|list|reload|craft|alchemist]
 permissions:
   xipill.admin:
-    description: 管理员权限
+    description: Admin permission
     default: op
   xipill.craft:
-    description: 炼丹权限
+    description: Craft permission
     default: true

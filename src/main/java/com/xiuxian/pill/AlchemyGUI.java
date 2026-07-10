@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -35,23 +36,19 @@ public class AlchemyGUI implements Listener {
     public void open(Player p) { showOverview(p); }
 
     // ==================== OVERVIEW ====================
-    // Layout:
-    // Row 0: [alchemist info______________]
-    // Row 1: [体修 label][p1][p2][p3][p4][p5][p6][p7][p8]
-    // Row 2: [         ][p9][p10][p11][p12][p13][___][___][___]
-    // Row 3: [法修 label][p1][p2][p3][p4][p5][p6][p7][p8]
-    // Row 4: [         ][p9][p10][p11][p12][p13][___][___][___]
-    // Row 5: [__________][______][close][________]
 
     private void showOverview(Player p) {
         inDetail.put(p.getUniqueId(), false);
         Inventory inv = Bukkit.createInventory(new Holder(), 54, T_OVERVIEW);
         glass(inv);
 
-        // Row 0: Alchemist info
+        // Row 0: Alchemist info (slot 4)
         drawAlchemistRow(inv, p, 0);
 
-        // Row 1-2: 体修 (13 pills -> 9 in row1, 4 in row2)
+        // Close button at slot 8 (top-right)
+        inv.setItem(8, createItem(Material.BARRIER, "\u00a7c\u5173\u95ed"));
+
+        // Row 1-2: 体修 (13 pills)
         List<String> lt = getPillsByType("lt");
         for (int i = 0; i < lt.size(); i++) {
             int slot = (i < 9) ? (9 + i) : (19 + i - 9);
@@ -59,27 +56,18 @@ public class AlchemyGUI implements Listener {
         }
         inv.setItem(18, label("\u00a7a\u00a7l\u4f53\u4fee"));
 
-        // Row 3-4: 法修 (13 pills -> 9 in row3, 4 in row4)
+        // Row 3-4: 法修 (13 pills)
         List<String> xf = getPillsByType("xf");
         for (int i = 0; i < xf.size(); i++) {
             int slot = (i < 9) ? (27 + i) : (37 + i - 9);
             inv.setItem(slot, makePillIcon(xf.get(i)));
         }
-        inv.setItem(36, label("\u00a7b\u00a7l\u25b6 \u6cd5\u4fee"));
-
-        // Row 5: close
-        inv.setItem(49, createItem(Material.BARRIER, "\u00a7c\u5173\u95ed"));
+        inv.setItem(36, label("\u00a7b\u00a7l\u6cd5\u4fee"));
 
         p.openInventory(inv);
     }
 
     // ==================== CRAFT DETAIL ====================
-    // Row 0: [alchemist info______________]
-    // Row 1: [___][____][pill name________][____][___]
-    // Row 2: [凡][灵][宝][圣][仙][天][神][报废][__]
-    // Row 3: [___][material cost][___][money cost][___]
-    // Row 4: [__________][__craft__][________]
-    // Row 5: [__back__][__close__][________]
 
     private void showCraft(Player p, String id) {
         inDetail.put(p.getUniqueId(), true);
@@ -94,10 +82,12 @@ public class AlchemyGUI implements Listener {
         int moneyCost = craftManager.getMoneyCost(ri);
         String matId = (String) pill.get("material");
 
-        // Row 0: Alchemist
+        // Row 0: Alchemist (slot 4) + Back (slot 7) + Close (slot 8)
         drawAlchemistRow(inv, p, 0);
+        inv.setItem(7, createItem(Material.ARROW, "\u00a7e\u8fd4\u56de"));
+        inv.setItem(8, createItem(Material.BARRIER, "\u00a7c\u5173\u95ed"));
 
-        // Row 1: Pill name + info
+        // Row 1: Pill info (slot 13)
         inv.setItem(13, createItem(Material.POTION,
             "\u00a7e\u00a7l" + pill.get("name"),
             "\u00a77\u5883\u754c: \u00a7e" + getRealm(id),
@@ -105,7 +95,7 @@ public class AlchemyGUI implements Listener {
             "\u00a77\u8017\u6750: \u00a7e" + matId + " x" + matCost,
             "\u00a77\u7075\u77f3: \u00a7e" + moneyCost));
 
-        // Row 2: Quality table
+        // Row 2: Quality table (slots 19-27)
         String[][] q = {{"\u00a77\u51e1\u54c1","40%","1x"},{"\u00a7a\u7075\u54c1","25%","2x"},
             {"\u00a7b\u5b9d\u54c1","15%","4x"},{"\u00a76\u5723\u54c1","10%","8x"},
             {"\u00a75\u4ed9\u54c1","5%","16x"},{"\u00a7c\u5929\u54c1","3%","32x"},
@@ -116,16 +106,12 @@ public class AlchemyGUI implements Listener {
         }
         inv.setItem(27, createItem(Material.BARRIER, "\u00a7c\u62a5\u5e9f 1%"));
 
-        // Row 3: Cost summary
+        // Row 3: Cost (slots 30, 32)
         inv.setItem(30, createItem(Material.PAPER, "\u00a77\u6240\u9700\u8017\u6750", "\u00a7e" + matId + " x" + matCost));
         inv.setItem(32, createItem(Material.GOLD_NUGGET, "\u00a77\u6240\u9700\u7075\u77f3", "\u00a7e" + moneyCost));
 
-        // Row 4: Craft
+        // Row 4: Craft button (slot 40)
         inv.setItem(40, createItem(Material.FIRE_CHARGE, "\u00a7c\u00a7l\u25b6 \u5f00\u59cb\u70bc\u5236"));
-
-        // Row 5: Back + Close
-        inv.setItem(48, createItem(Material.ARROW, "\u00a7e\u8fd4\u56de"));
-        inv.setItem(49, createItem(Material.BARRIER, "\u00a7c\u5173\u95ed"));
 
         p.openInventory(inv);
     }
@@ -138,13 +124,13 @@ public class AlchemyGUI implements Listener {
         int xpMax = alchemistManager.getXpToNext(p.getUniqueId());
         String name = alchemistManager.getName(p.getUniqueId());
         double bonus = alchemistManager.getBonus(p.getUniqueId());
-        String bar = bar(xp, xpMax, 20);
+        String progress = bar(xp, xpMax, 20);
 
         inv.setItem(startSlot + 4, createItem(Material.BREWING_STAND,
             "\u00a76\u00a7l\u2550\u2550\u2550 \u70bc\u4e39\u5e08 \u2550\u2550\u2550",
             "",
             " \u00a77\u7b49\u7ea7: \u00a7e" + name + "    \u00a77XP: \u00a7e" + xp + "/" + xpMax,
-            " \u00a7a" + bar,
+            " \u00a7a" + progress,
             "",
             " \u00a77\u9ad8\u54c1\u8d28\u52a0\u6210: \u00a7a+" + (int)(bonus*100) + "%",
             " \u00a78\u6bcf\u6b21\u70bc\u4e39\u6210\u529f +1~10 XP"));
@@ -170,37 +156,48 @@ public class AlchemyGUI implements Listener {
         if (s < 0 || s >= 54) return;
 
         UUID u = p.getUniqueId();
-        if (!inDetail.getOrDefault(u, false)) {
-            // Overview: find which pill was clicked
+        boolean detail = inDetail.getOrDefault(u, false);
+
+        if (!detail) {
+            // ===== OVERVIEW MODE =====
+            // Slot 8: Close button
+            if (s == 8) { p.closeInventory(); return; }
+
+            // Slots 9-22, 27-44: Pill icons - find by name
             ItemStack item = e.getInventory().getItem(s);
             if (item == null) return;
             ItemMeta m = item.getItemMeta();
-            if (m == null || !m.hasDisplayName()) {
-                if (s == 8) p.closeInventory();
-                return;
-            }
-            String name = m.getDisplayName();
+            if (m == null || !m.hasDisplayName()) return;
+
+            String clickedName = m.getDisplayName();
             for (Map.Entry<String, Map<String, Object>> en : plugin.getAllPills().entrySet()) {
-                if (name.equals(en.getValue().get("name"))) {
+                if (clickedName.equals(en.getValue().get("name"))) {
                     showCraft(p, en.getKey());
                     return;
                 }
             }
         } else {
-            // Detail
-            if (s == 40) doCraft(p, selectedPill.getOrDefault(u, ""));
-            else if (s == 7) showOverview(p);
-            else if (s == 8) p.closeInventory();
+            // ===== DETAIL MODE =====
+            switch (s) {
+                case 40: doCraft(p, selectedPill.getOrDefault(u, "")); break;
+                case 7:  showOverview(p); break;
+                case 8:  p.closeInventory(); break;
+            }
         }
     }
 
+    // FIX: Don't reset state on close - only on quit
+    // This prevents the "switching screens resets state" bug
     @EventHandler
     public void onClose(InventoryCloseEvent e) {
-        if (e.getInventory().getHolder() instanceof Holder) {
-            UUID u = e.getPlayer().getUniqueId();
-            inDetail.remove(u);
-            selectedPill.remove(u);
-        }
+        // Intentionally empty - state persists until quit or new GUI open
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        UUID u = e.getPlayer().getUniqueId();
+        inDetail.remove(u);
+        selectedPill.remove(u);
     }
 
     // ==================== CRAFT ====================
