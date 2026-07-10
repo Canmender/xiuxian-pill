@@ -279,18 +279,30 @@ public class AlchemyGUI implements Listener {
     }
 
     private boolean hasMoney(Player p, int amt) {
+        double balance = getPlayerBalance(p);
+        return balance >= amt;
+    }
+
+    private double getPlayerBalance(Player p) {
         try {
             Class<?> apiClass = Class.forName("me.yic.xconomy.api.XConomyAPI");
+            // Try UUID first
             java.lang.reflect.Method getPlayerData = apiClass.getMethod("getPlayerData", java.util.UUID.class);
             Object playerData = getPlayerData.invoke(null, p.getUniqueId());
-            if (playerData == null) return false;
-            java.lang.reflect.Method getBalance = playerData.getClass().getMethod("getBalance");
-            java.math.BigDecimal bal = (java.math.BigDecimal) getBalance.invoke(playerData);
-            return bal != null && bal.doubleValue() >= amt;
+            // If null, try with name
+            if (playerData == null) {
+                getPlayerData = apiClass.getMethod("getPlayerData", String.class);
+                playerData = getPlayerData.invoke(null, p.getName());
+            }
+            if (playerData != null) {
+                java.lang.reflect.Method getBalance = playerData.getClass().getMethod("getBalance");
+                java.math.BigDecimal bal = (java.math.BigDecimal) getBalance.invoke(playerData);
+                if (bal != null) return bal.doubleValue();
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            // Silent fallback
         }
-        return false;
+        return 0;
     }
 
     private void payMoney(Player p, int amt) {
@@ -300,7 +312,8 @@ public class AlchemyGUI implements Listener {
             java.math.BigDecimal neg = new java.math.BigDecimal("-" + amt);
             change.invoke(null, p.getUniqueId(), neg.toPlainString());
         } catch (Exception e) {
-            e.printStackTrace();
+            // Fallback: use command
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "xconomy take " + p.getName() + " " + amt);
         }
     }
 
