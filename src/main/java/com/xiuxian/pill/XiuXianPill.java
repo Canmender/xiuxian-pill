@@ -124,6 +124,12 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
         return all;
     }
 
+    public PillData getPillData(String id) {
+        PillData pd = liantiPills.get(id);
+        if (pd == null) pd = xiufaPills.get(id);
+        return pd;
+    }
+
     public AlchemistManager getAlchemistManager() { return alchemistManager; }
     public PillCraftingManager getCraftManager() { return craftManager; }
 
