@@ -1,9 +1,6 @@
-# XiuXianPill Configuration - 经验丹系统
+# XiuXianPill v2.0 - 丹药 + 炼丹系统
 
 # ===== 体修经验丹 =====
-# xp-amount: 直接给予的修为值
-# duration: 无用，保留字段
-
 lianti-pills:
   0:
     name: "&a开脉丹"
@@ -11,78 +8,91 @@ lianti-pills:
     realm: 通脉
     xp-amount: 100
     material: COAL
+    alchemist-material: material_灵草
   1:
     name: "&a铸骨丹"
     description: "&7服用后获得200修为"
     realm: 锻骨
     xp-amount: 200
     material: COAL
+    alchemist-material: material_铁矿砂
   2:
     name: "&a洗腑丹"
     description: "&7服用后获得400修为"
     realm: 练腑
     xp-amount: 400
     material: COAL
+    alchemist-material: material_清灵花
   3:
     name: "&b凝元丹"
     description: "&7服用后获得800修为"
     realm: 元武
     xp-amount: 800
     material: COAL_BLOCK
+    alchemist-material: material_玄铁矿
   4:
     name: "&b神力丹"
     description: "&7服用后获得1500修为"
     realm: 神力
     xp-amount: 1500
     material: COAL_BLOCK
+    alchemist-material: material_紫金砂
   5:
     name: "&b破虚丹"
     description: "&7服用后获得3000修为"
     realm: 破虚
     xp-amount: 3000
     material: COAL_BLOCK
+    alchemist-material: material_混元石
   6:
     name: "&9混元丹"
     description: "&7服用后获得5000修为"
     realm: 混元
     xp-amount: 5000
     material: IRON_INGOT
+    alchemist-material: material_万年灵芝
   7:
     name: "&9大成丹"
     description: "&7服用后获得8000修为"
     realm: 大成
     xp-amount: 8000
     material: IRON_INGOT
+    alchemist-material: material_凤凰羽
   8:
     name: "&9涅槃丹"
     description: "&7服用后获得12000修为"
     realm: 涅槃
     xp-amount: 12000
     material: IRON_INGOT
+    alchemist-material: material_凤凰心血
   9:
     name: "&d真武丹"
     description: "&7服用后获得20000修为"
     realm: 真武
     xp-amount: 20000
     material: GOLD_INGOT
+    alchemist-material: material_龙血石
   10:
     name: "&d金相丹"
     description: "&7服用后获得35000修为"
     realm: 金相
     xp-amount: 35000
     material: GOLD_INGOT
+    alchemist-material: material_麒麟角
   11:
     name: "&6太上丹"
     description: "&7服用后获得60000修为"
     realm: 太上
     xp-amount: 60000
     material: DIAMOND
+    alchemist-material: material_太乙精金
   12:
     name: "&6罗天丹"
     description: "&7服用后获得100000修为"
     realm: 罗天
     xp-amount: 100000
     material: DIAMOND
+    alchemist-material: material_九天玄铁
 
 # ===== 法修经验丹 =====
 xiufa-pills:
@@ -92,80 +102,129 @@ xiufa-pills:
     realm: 练气
     xp-amount: 100
     material: COAL
+    alchemist-material: material_灵泉水
   1:
     name: "&a固基丹"
     description: "&7服用后获得200修为"
     realm: 筑基
     xp-amount: 200
     material: COAL
+    alchemist-material: material_丹砂
   2:
     name: "&a凝丹丹"
     description: "&7服用后获得400修为"
     realm: 结丹
     xp-amount: 400
     material: COAL
+    alchemist-material: material_玉髓
   3:
     name: "&b化婴丹"
     description: "&7服用后获得800修为"
     realm: 元婴
     xp-amount: 800
     material: COAL_BLOCK
+    alchemist-material: material_紫晶石
   4:
     name: "&b通神丹"
     description: "&7服用后获得1500修为"
     realm: 化神
     xp-amount: 1500
     material: COAL_BLOCK
+    alchemist-material: material_天雷木
   5:
     name: "&b归虚丹"
     description: "&7服用后获得3000修为"
     realm: 返虚
     xp-amount: 3000
     material: COAL_BLOCK
+    alchemist-material: material_玄冰晶
   6:
     name: "&9融合丹"
     description: "&7服用后获得5000修为"
     realm: 合体
     xp-amount: 5000
     material: IRON_INGOT
+    alchemist-material: material_太极石
   7:
     name: "&9大乘丹"
     description: "&7服用后获得8000修为"
     realm: 大乘
     xp-amount: 8000
     material: IRON_INGOT
+    alchemist-material: material_佛心莲
   8:
     name: "&9渡劫丹"
     description: "&7服用后获得12000修为"
     realm: 渡劫
     xp-amount: 12000
     material: IRON_INGOT
+    alchemist-material: material_雷劫液
   9:
     name: "&d真仙丹"
     description: "&7服用后获得20000修为"
     realm: 真仙
     xp-amount: 20000
     material: GOLD_INGOT
+    alchemist-material: material_仙露
   10:
     name: "&d金仙丹"
     description: "&7服用后获得35000修为"
     realm: 金仙
     xp-amount: 35000
     material: GOLD_INGOT
+    alchemist-material: material_金莲子
   11:
     name: "&6太乙丹"
     description: "&7服用后获得60000修为"
     realm: 太乙
     xp-amount: 60000
     material: DIAMOND
+    alchemist-material: material_太乙神水
   12:
     name: "&6大罗丹"
     description: "&7服用后获得100000修为"
     realm: 大罗
     xp-amount: 100000
     material: DIAMOND
+    alchemist-material: material_大罗仙石
 
-# ===== 显示设置 =====
+# ===== 炼丹系统 =====
+# 品质概率
+quality-rates:
+  white: 40
+  green: 25
+  blue: 15
+  purple: 10
+  gold: 5
+  red: 3
+  black: 1
+
+# 品质修为倍率
+quality-xp-multiplier:
+  white: 1.0
+  green: 2.0
+  blue: 4.0
+  purple: 8.0
+  gold: 16.0
+  red: 32.0
+  black: 64.0
+
+# 每境界消耗 [耗材数量, 灵石]
+realm-costs:
+  "0": {material: 3, money: 100}
+  "1": {material: 5, money: 300}
+  "2": {material: 8, money: 800}
+  "3": {material: 12, money: 2000}
+  "4": {material: 16, money: 5000}
+  "5": {material: 20, money: 12000}
+  "6": {material: 25, money: 30000}
+  "7": {material: 30, money: 75000}
+  "8": {material: 36, money: 180000}
+  "9": {material: 42, money: 400000}
+  "10": {material: 50, money: 900000}
+  "11": {material: 60, money: 2000000}
+  "12": {material: 72, money: 5000000}
+
+# ===== 显示消息 =====
 use-message: "&a&l【服用】&7服用 &f{pill_name} &7获得 &c{xp_amount} &7修为"
 realm-too-high-message: "&c&l【境界不足】&7需要 &f{required_realm} &7境界才能服用此丹药"
-already-active-message: "&c&l【已生效】&7已有经验加成效果"

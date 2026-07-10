@@ -3,7 +3,6 @@ package com.xiuxian.pill;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -21,36 +20,52 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
 
 public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener {
-    
+
     private final Map<String, PillData> liantiPills = new HashMap<>();
     private final Map<String, PillData> xiufaPills = new HashMap<>();
     private File xiuxianDataDir;
-    
+
+    private AlchemistManager alchemistManager;
+    private PillCraftingManager craftManager;
+    private AlchemyGUI alchemyGUI;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
         reloadConfig();
         loadPills();
-        
+
         xiuxianDataDir = new File("D:/MineCraft/server/plugins/XiuXianCore/data");
-        
+
+        // Initialize alchemy system
+        alchemistManager = new AlchemistManager(getDataFolder());
+        craftManager = new PillCraftingManager();
+        craftManager.loadConfig(getConfig());
+        alchemyGUI = new AlchemyGUI(this);
+
         getCommand("pill").setExecutor(this);
         Bukkit.getPluginManager().registerEvents(this, this);
-        
-        getLogger().info("XiuXianPill enabled: " + liantiPills.size() + " lianti pills, " + xiufaPills.size() + " xiufa pills");
+        Bukkit.getPluginManager().registerEvents(alchemyGUI, this);
+
+        getLogger().info("XiuXianPill v2.0 enabled: " + liantiPills.size() + " lianti, " + xiufaPills.size() + " xiufa pills, alchemy system ready");
     }
-    
+
+    @Override
+    public void onDisable() {
+        getLogger().info("XiuXianPill disabled");
+    }
+
+    // ========== Pill Loading ==========
+
     private void loadPills() {
         liantiPills.clear();
         xiufaPills.clear();
         FileConfiguration cfg = getConfig();
-        
+
         ConfigurationSection ltSection = cfg.getConfigurationSection("lianti-pills");
         if (ltSection != null) {
             for (String key : ltSection.getKeys(false)) {
@@ -62,11 +77,12 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
                     s.getString("description", ""),
                     s.getString("realm", ""),
                     s.getInt("xp-amount", 100),
-                    Material.matchMaterial(s.getString("material", "PAPER"))
+                    Material.matchMaterial(s.getString("material", "PAPER")),
+                    s.getString("alchemist-material", "")
                 ));
             }
         }
-        
+
         ConfigurationSection xfSection = cfg.getConfigurationSection("xiufa-pills");
         if (xfSection != null) {
             for (String key : xfSection.getKeys(false)) {
@@ -78,211 +94,222 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
                     s.getString("description", ""),
                     s.getString("realm", ""),
                     s.getInt("xp-amount", 100),
-                    Material.matchMaterial(s.getString("material", "PAPER"))
+                    Material.matchMaterial(s.getString("material", "PAPER")),
+                    s.getString("alchemist-material", "")
                 ));
             }
         }
     }
-    
+
+    // ========== Public API ==========
+
+    public Map<String, Map<String, Object>> getAllPills() {
+        Map<String, Map<String, Object>> all = new LinkedHashMap<>();
+        for (Map.Entry<String, PillData> e : liantiPills.entrySet()) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("name", e.getValue().name);
+            map.put("xp-amount", e.getValue().xpAmount);
+            map.put("material", e.getValue().alchemistMaterial);
+            map.put("type", "lianti");
+            all.put(e.getKey(), map);
+        }
+        for (Map.Entry<String, PillData> e : xiufaPills.entrySet()) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("name", e.getValue().name);
+            map.put("xp-amount", e.getValue().xpAmount);
+            map.put("material", e.getValue().alchemistMaterial);
+            map.put("type", "xiufa");
+            all.put(e.getKey(), map);
+        }
+        return all;
+    }
+
+    public AlchemistManager getAlchemistManager() { return alchemistManager; }
+    public PillCraftingManager getCraftManager() { return craftManager; }
+
+    // ========== Commands ==========
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 0) {
-            showHelp(sender);
-            return true;
-        }
-        
+        if (args.length == 0) { showHelp(sender); return true; }
+
         switch (args[0].toLowerCase()) {
             case "list":
                 showPillList(sender);
                 break;
             case "give":
-                if (args.length < 3) {
-                    sender.sendMessage(ChatColor.YELLOW + "用法: /pill give <玩家> <类型> [数量]");
-                    return true;
-                }
                 givePill(sender, args);
                 break;
+            case "use":
+                if (!(sender instanceof Player)) { sender.sendMessage("Only players"); return true; }
+                usePillFromHand((Player) sender);
+                break;
+            case "craft":
+                if (!(sender instanceof Player)) { sender.sendMessage("Only players"); return true; }
+                if (!sender.hasPermission("xipill.craft")) { sender.sendMessage("\u00a7c\u6ca1\u6709\u6743\u9650"); return true; }
+                alchemyGUI.open((Player) sender);
+                break;
+            case "alchemist":
+                if (!(sender instanceof Player)) { sender.sendMessage("Only players"); return true; }
+                showAlchemistInfo((Player) sender);
+                break;
             case "reload":
-                if (!sender.hasPermission("xipill.admin")) {
-                    sender.sendMessage(ChatColor.RED + "没有权限");
-                    return true;
-                }
+                if (!sender.hasPermission("xipill.admin")) { sender.sendMessage("\u00a7c\u6ca1\u6709\u6743\u9650"); return true; }
                 reloadConfig();
                 loadPills();
-                sender.sendMessage(ChatColor.GREEN + "丹药配置已重载");
-                break;
-            case "use":
-                if (!(sender instanceof Player)) {
-                    sender.sendMessage("只有玩家可以使用");
-                    return true;
-                }
-                usePillFromHand((Player) sender);
+                craftManager.loadConfig(getConfig());
+                sender.sendMessage(colorize("\u00a7a\u4e39\u836f\u914d\u7f6e\u5df2\u91cd\u8f7d"));
                 break;
             default:
                 showHelp(sender);
         }
         return true;
     }
-    
+
     private void showHelp(CommandSender sender) {
-        sender.sendMessage(colorize("&6&l━━━━━━━━━━━━━━━━━━━━━━"));
-        sender.sendMessage(colorize("&6&l      丹药系统"));
-        sender.sendMessage(colorize("&6&l━━━━━━━━━━━━━━━━━━━━━━"));
-        sender.sendMessage(colorize(" &e/pill list &7- 查看丹药列表"));
-        sender.sendMessage(colorize(" &e/pill give <玩家> <类型> [数量] &7- 给予丹药"));
-        sender.sendMessage(colorize(" &e/pill use &7- 手持服用"));
-        sender.sendMessage(colorize(" &e/pill reload &7- 重载配置"));
-        sender.sendMessage(colorize("&6&l━━━━━━━━━━━━━━━━━━━━━━"));
+        sender.sendMessage(colorize("\u00a76\u00a7l\u2501\u2501\u2501 \u4e39\u836f\u7cfb\u7edf \u2501\u2501\u2501"));
+        sender.sendMessage(colorize(" \u00a7e/pill list \u00a77- \u67e5\u770b\u4e39\u836f\u5217\u8868"));
+        sender.sendMessage(colorize(" \u00a7e/pill use \u00a77- \u624b\u6301\u670d\u7528"));
+        sender.sendMessage(colorize(" \u00a7e/pill craft \u00a77- \u6253\u5f00\u70bc\u4e39\u53f0"));
+        sender.sendMessage(colorize(" \u00a7e/pill alchemist \u00a77- \u67e5\u770b\u70bc\u4e39\u5e08\u4fe1\u606f"));
+        sender.sendMessage(colorize(" \u00a7e/pill give <\u73a9\u5bb6> <\u7c7b\u578b> [\u6570\u91cf]"));
+        sender.sendMessage(colorize(" \u00a7e/pill reload \u00a77- \u91cd\u8f7d\u914d\u7f6e"));
+        sender.sendMessage(colorize("\u00a76\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501"));
     }
-    
+
+    private void showAlchemistInfo(Player p) {
+        int level = alchemistManager.getLevel(p.getUniqueId());
+        int xp = alchemistManager.getXp(p.getUniqueId());
+        int xpNeed = alchemistManager.getXpToNext(p.getUniqueId());
+        String name = alchemistManager.getName(p.getUniqueId());
+        double bonus = alchemistManager.getBonus(p.getUniqueId());
+
+        p.sendMessage(colorize("\u00a76\u00a7l\u2501\u2501\u2501 \u70bc\u4e39\u5e08\u4fe1\u606f \u2501\u2501\u2501"));
+        p.sendMessage(colorize(" \u00a77\u7b49\u7ea7: \u00a7e" + name));
+        p.sendMessage(colorize(" \u00a77XP: \u00a7e" + xp + " \u00a77/ \u00a7e" + xpNeed));
+        p.sendMessage(colorize(" \u00a77\u9ad8\u54c1\u8d28\u52a0\u6210: \u00a7a+" + (int)(bonus * 100) + "%"));
+        p.sendMessage(colorize("\u00a76\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501"));
+    }
+
+    // ========== Furnace Right-Click ==========
+
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (event.getHand() != EquipmentSlot.HAND) return;
+
+        Player p = event.getPlayer();
+        ItemStack item = p.getInventory().getItemInMainHand();
+        if (item == null || item.getType() == Material.AIR) return;
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+
+        // Check if holding alchemy furnace
+        if (meta.hasCustomModelData() && meta.getCustomModelData() == 14001) {
+            event.setCancelled(true);
+            alchemyGUI.open(p);
+            return;
+        }
+
+        // Original pill use logic
+        if (!meta.hasDisplayName()) return;
+        PillData pill = findPill(meta.getDisplayName(), item.getType());
+        if (pill != null) {
+            event.setCancelled(true);
+            usePill(p, pill, item);
+        }
+    }
+
+    // ========== Original pill methods ==========
+
     private void showPillList(CommandSender sender) {
-        sender.sendMessage(colorize("&6&l━━━━━━━━━━━━━━━━━━━━━━"));
-        sender.sendMessage(colorize("&6&l      体修经验丹"));
-        sender.sendMessage(colorize("&6&l━━━━━━━━━━━━━━━━━━━━━━"));
-        
+        sender.sendMessage(colorize("\u00a76\u00a7l\u2501\u2501\u2501 \u4f53\u4fee\u7ecf\u9a8c\u4e39 \u2501\u2501\u2501"));
         for (Map.Entry<String, PillData> entry : liantiPills.entrySet()) {
             PillData pill = entry.getValue();
-            sender.sendMessage(colorize(" &f" + entry.getKey() + " &7- " + pill.name + " &7(" + pill.realm + ") " + pill.xpAmount + "修为"));
+            sender.sendMessage(colorize(" \u00a7f" + entry.getKey() + " \u00a77- " + pill.name + " \u00a77(" + pill.realm + ") \u00a7e" + pill.xpAmount + "\u4fee\u4e3a"));
         }
-        
-        sender.sendMessage(colorize("&6&l━━━━━━━━━━━━━━━━━━━━━━"));
-        sender.sendMessage(colorize("&6&l      法修经验丹"));
-        sender.sendMessage(colorize("&6&l━━━━━━━━━━━━━━━━━━━━━━"));
-        
+        sender.sendMessage(colorize("\u00a76\u2501\u2501\u2501 \u6cd5\u4fee\u7ecf\u9a8c\u4e39 \u2501\u2501\u2501"));
         for (Map.Entry<String, PillData> entry : xiufaPills.entrySet()) {
             PillData pill = entry.getValue();
-            sender.sendMessage(colorize(" &f" + entry.getKey() + " &7- " + pill.name + " &7(" + pill.realm + ") " + pill.xpAmount + "修为"));
+            sender.sendMessage(colorize(" \u00a7f" + entry.getKey() + " \u00a77- " + pill.name + " \u00a77(" + pill.realm + ") \u00a7e" + pill.xpAmount + "\u4fee\u4e3a"));
         }
-        
-        sender.sendMessage(colorize("&6&l━━━━━━━━━━━━━━━━━━━━━━"));
+        sender.sendMessage(colorize("\u00a76\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501"));
     }
-    
+
     private void givePill(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("xipill.admin")) {
-            sender.sendMessage(ChatColor.RED + "没有权限");
-            return;
-        }
-        
+        if (!sender.hasPermission("xipill.admin")) { sender.sendMessage("\u00a7c\u6ca1\u6709\u6743\u9650"); return; }
+        if (args.length < 3) { sender.sendMessage("\u00a7e\u7528\u6cd5: /pill give <\u73a9\u5bb6> <\u7c7b\u578b> [\u6570\u91cf]"); return; }
+
         Player target = Bukkit.getPlayer(args[1]);
-        if (target == null) {
-            sender.sendMessage(ChatColor.RED + "玩家不在线: " + args[1]);
-            return;
-        }
-        
+        if (target == null) { sender.sendMessage("\u00a7c\u73a9\u5bb6\u4e0d\u5728\u7ebf: " + args[1]); return; }
+
         String pillType = args[2].toLowerCase();
         int amount = args.length > 3 ? Integer.parseInt(args[3]) : 1;
-        
+
         PillData pill = liantiPills.get(pillType);
         if (pill == null) pill = xiufaPills.get(pillType);
-        
-        if (pill == null) {
-            sender.sendMessage(ChatColor.RED + "无效的丹药类型: " + pillType);
-            return;
-        }
-        
+        if (pill == null) { sender.sendMessage("\u00a7c\u65e0\u6548\u7684\u4e39\u836f\u7c7b\u578b: " + pillType); return; }
+
         ItemStack item = createPillItem(pill);
         item.setAmount(amount);
         target.getInventory().addItem(item);
-        
-        sender.sendMessage(ChatColor.GREEN + "给予 " + target.getName() + " " + pill.name + " x" + amount);
+        sender.sendMessage(colorize("\u00a7a\u7ed9\u4e88 " + target.getName() + " " + pill.name + " x" + amount));
     }
-    
+
     private void usePillFromHand(Player p) {
         ItemStack item = p.getInventory().getItemInMainHand();
-        if (item == null || item.getType() == Material.AIR) {
-            p.sendMessage(ChatColor.YELLOW + "请手持丹药");
-            return;
-        }
-        
+        if (item == null || item.getType() == Material.AIR) { p.sendMessage("\u00a7e\u8bf7\u624b\u6301\u4e39\u836f"); return; }
         ItemMeta meta = item.getItemMeta();
-        if (meta == null || !meta.hasDisplayName()) {
-            p.sendMessage(ChatColor.YELLOW + "这不是丹药");
-            return;
-        }
-        
-        getLogger().info("Looking for pill: " + meta.getDisplayName() + " type=" + item.getType());
+        if (meta == null || !meta.hasDisplayName()) { p.sendMessage("\u00a7e\u8fd9\u4e0d\u662f\u4e39\u836f"); return; }
         PillData pill = findPill(meta.getDisplayName(), item.getType());
-        if (pill == null) {
-            p.sendMessage(ChatColor.YELLOW + "这不是丹药");
-            getLogger().info("Pill not found! name=" + meta.getDisplayName());
-            return;
-        }
-        getLogger().info("Found pill: " + pill.name + " xp=" + pill.xpAmount);
+        if (pill == null) { p.sendMessage("\u00a7e\u8fd9\u4e0d\u662f\u4e39\u836f"); return; }
         usePill(p, pill, item);
     }
-    
+
     private void usePill(Player p, PillData pill, ItemStack item) {
-        getLogger().info("usePill called: " + pill.name);
-        // 检查境界
         boolean isLianti = liantiPills.containsValue(pill);
         int playerRealmIdx = getPlayerRealmIndex(p, isLianti);
-        
+
         if (playerRealmIdx < pill.realmIndex) {
-            String requiredRealm = isLianti ? 
-                getLantiRealmName(pill.realmIndex) : 
-                getXufaRealmName(pill.realmIndex);
-            p.sendMessage(colorize(getConfig().getString("realm-too-high-message", "境界不足")
-                .replace("{required_realm}", requiredRealm)));
+            String requiredRealm = isLianti ? getLantiRealmName(pill.realmIndex) : getXufaRealmName(pill.realmIndex);
+            p.sendMessage(colorize(getConfig().getString("realm-too-high-message", "\u5883\u754c\u4e0d\u8db3").replace("{required_realm}", requiredRealm)));
             return;
         }
-        
-        // 给予修为
+
         boolean success = addXpToPlayer(p, pill.xpAmount, isLianti);
-        if (!success) {
-            p.sendMessage(ChatColor.RED + "给予修为失败");
-            return;
-        }
-        
-        // 消耗物品
+        if (!success) { p.sendMessage("\u00a7c\u7ed9\u4e88\u4fee\u4e3a\u5931\u8d25"); return; }
+
         item.setAmount(item.getAmount() - 1);
-        
-        String msg = getConfig().getString("use-message", "服用 {pill_name} 获得 {xp_amount} 修为");
-        p.sendMessage(colorize(msg
-            .replace("{pill_name}", pill.name)
-            .replace("{xp_amount}", String.valueOf(pill.xpAmount))));
+        String msg = getConfig().getString("use-message", "\u670d\u7528 {pill_name} \u83b7\u5f97 {xp_amount} \u4fee\u4e3a");
+        p.sendMessage(colorize(msg.replace("{pill_name}", pill.name).replace("{xp_amount}", String.valueOf(pill.xpAmount))));
     }
-    
-    // ========== 修为系统 ==========
-    
+
     private boolean addXpToPlayer(Player p, int xpAmount, boolean isLianti) {
-        // 通过XiuXianCore的API添加修为
-        Plugin plugin = Bukkit.getPluginManager().getPlugin("XiuXianCore");
-        if (plugin == null) {
-            getLogger().warning("XiuXianCore not found!");
-            return false;
-        }
-        
         try {
-            java.lang.reflect.Method method = plugin.getClass().getMethod("addXp", java.util.UUID.class, double.class, boolean.class);
+            org.bukkit.plugin.Plugin plugin = Bukkit.getPluginManager().getPlugin("XiuXianCore");
+            if (plugin == null) return false;
+            java.lang.reflect.Method method = plugin.getClass().getMethod("addXp", UUID.class, double.class, boolean.class);
             method.invoke(plugin, p.getUniqueId(), (double) xpAmount, isLianti);
-            // 立即检查升级
-            java.lang.reflect.Method levelUpMethod = plugin.getClass().getMethod("checkLevelUp", java.util.UUID.class);
+            java.lang.reflect.Method levelUpMethod = plugin.getClass().getMethod("checkLevelUp", UUID.class);
             levelUpMethod.invoke(plugin, p.getUniqueId());
-            getLogger().info("Added " + xpAmount + " XP to " + p.getName() + " via XiuXianCore API");
             return true;
-        } catch (Exception e) {
-            getLogger().warning("Failed to call XiuXianCore API: " + e.getMessage());
-            return false;
-        }
+        } catch (Exception e) { return false; }
     }
-    
+
     private int getPlayerRealmIndex(Player p, boolean isLianti) {
         if (xiuxianDataDir == null || !xiuxianDataDir.exists()) return 12;
-        
         File file = new File(xiuxianDataDir, p.getUniqueId().toString() + ".json");
         if (!file.exists()) return 12;
-        
         try {
             JsonObject json = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
-            int level = isLianti ? 
+            int level = isLianti ?
                 (json.has("liantiLevel") ? json.get("liantiLevel").getAsInt() : 0) :
                 (json.has("xiufaLevel") ? json.get("xiufaLevel").getAsInt() : 0);
             return level / 100;
-        } catch (Exception e) {
-            return 12;
-        }
+        } catch (Exception e) { return 12; }
     }
-    
+
     private PillData findPill(String displayName, Material material) {
         for (PillData pill : liantiPills.values()) {
             if (pill.material == material && pill.name.equals(displayName)) return pill;
@@ -292,31 +319,7 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
         }
         return null;
     }
-    
-    // ========== 右键服用 ==========
-    
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-        if (event.getHand() != EquipmentSlot.HAND) return;
-        
-        Player p = event.getPlayer();
-        ItemStack item = p.getInventory().getItemInMainHand();
-        if (item == null || item.getType() == Material.AIR) return;
-        
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null || !meta.hasDisplayName()) return;
-        
-        getLogger().info("Looking for pill: " + meta.getDisplayName() + " type=" + item.getType());
-        PillData pill = findPill(meta.getDisplayName(), item.getType());
-        if (pill != null) {
-            event.setCancelled(true);
-            usePill(p, pill, item);
-        }
-    }
-    
-    // ========== 工具方法 ==========
-    
+
     private ItemStack createPillItem(PillData pill) {
         ItemStack item = new ItemStack(pill.material);
         ItemMeta meta = item.getItemMeta();
@@ -324,46 +327,45 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
             meta.setDisplayName(pill.name);
             List<String> lore = new ArrayList<>();
             lore.add(colorize(pill.description));
-            lore.add(colorize("&7境界: " + pill.realm));
-            lore.add(colorize("&7修为: +" + pill.xpAmount));
+            lore.add(colorize("\u00a77\u5883\u754c: " + pill.realm));
+            lore.add(colorize("\u00a77\u4fee\u4e3a: +" + pill.xpAmount));
             lore.add("");
-            lore.add(colorize("&7右键服用"));
+            lore.add(colorize("\u00a77\u53f3\u952e\u670d\u7528"));
             meta.setLore(lore);
             item.setItemMeta(meta);
         }
         return item;
     }
-    
+
     private String getLantiRealmName(int idx) {
-        String[] realms = {"通脉", "锻骨", "练腑", "元武", "神力", "破虚", "混元", "大成", "涅槃", "真武", "金相", "太上", "罗天"};
-        return idx >= 0 && idx < realms.length ? realms[idx] : "未知";
+        String[] realms = {"\u901a\u8109", "\u953b\u9aa8", "\u7ec3\u817f", "\u5143\u6b66", "\u795e\u529b", "\u7834\u865a", "\u6df7\u5143", "\u5927\u6210", "\u6d85\u69c3", "\u771f\u6b66", "\u91d1\u76f8", "\u592a\u4e0a", "\u7f57\u5929"};
+        return idx >= 0 && idx < realms.length ? realms[idx] : "\u672a\u77e5";
     }
-    
+
     private String getXufaRealmName(int idx) {
-        String[] realms = {"练气", "筑基", "结丹", "元婴", "化神", "返虚", "合体", "大乘", "渡劫", "真仙", "金仙", "太乙", "大罗"};
-        return idx >= 0 && idx < realms.length ? realms[idx] : "未知";
+        String[] realms = {"\u7ec3\u6c14", "\u7b51\u57fa", "\u7ed3\u4e39", "\u5143\u5a75", "\u5316\u795e", "\u8fd4\u865a", "\u5408\u4f53", "\u5927\u4e58", "\u6e21\u52ab", "\u771f\u4ed9", "\u91d1\u4ed9", "\u592a\u4e59", "\u5927\u7f57"};
+        return idx >= 0 && idx < realms.length ? realms[idx] : "\u672a\u77e5";
     }
-    
+
     private String colorize(String msg) {
         return ChatColor.translateAlternateColorCodes('&', msg);
     }
-    
-    // ========== 内部类 ==========
-    
+
     static class PillData {
         int realmIndex;
-        String name, description, realm;
+        String name, description, realm, alchemistMaterial;
         int xpAmount;
         Material material;
-        
-        PillData(int realmIndex, String name, String description, String realm, 
-                 int xpAmount, Material material) {
+
+        PillData(int realmIndex, String name, String description, String realm,
+                 int xpAmount, Material material, String alchemistMaterial) {
             this.realmIndex = realmIndex;
             this.name = name;
             this.description = description;
             this.realm = realm;
             this.xpAmount = xpAmount;
             this.material = material;
+            this.alchemistMaterial = alchemistMaterial;
         }
     }
 }
