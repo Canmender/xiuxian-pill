@@ -202,7 +202,7 @@ public class AlchemyGUI implements Listener {
         // Give pill item
         XiuXianPill.PillData pd = plugin.getPillData(id);
         if (pd != null) {
-            org.bukkit.inventory.ItemStack pillItem = plugin.createPillItem(pd);
+            org.bukkit.inventory.ItemStack pillItem = plugin.createPillItem(pd, r.qualityIndex);
             if (pillItem != null) {
                 pillItem.setAmount(1);
                 p.getInventory().addItem(pillItem);
