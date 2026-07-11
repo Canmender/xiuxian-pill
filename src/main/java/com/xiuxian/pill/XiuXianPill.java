@@ -402,13 +402,10 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
             String qN = (qualityIndex >= 0 && qualityIndex < 7) ? qNames[qualityIndex] : "";
             meta.setDisplayName(qN + pill.name);
             List<String> lore = new ArrayList<>();
-            // Dynamic description: show base XP amount
-            lore.add(colorize("\u00a77\u670d\u7528\u540e\u83b7\u5f97 \u00a7a+" + pill.xpAmount + " \u00a77\u4fee\u4e3a"));
             lore.add(colorize("\u00a77\u5883\u754c: \u00a7e" + pill.realm));
-            lore.add(colorize("\u00a77\u57fa\u7840\u4fee\u4e3a: \u00a7a+" + pill.xpAmount));
+            lore.add(colorize("\u00a77\u4fee\u4e3a: \u00a7a+" + pill.xpAmount + " \u00a77(\u57fa\u7840)"));
             lore.add("");
-            lore.add(colorize("\u00a78\u54c1\u8d28\u5f71\u54cd\u4fee\u4e3a\u500d\u7387"));
-            lore.add(colorize("\u00a77\u53f3\u952e\u670d\u7528"));
+            lore.add(colorize("\u00a78\u53f3\u952e\u670d\u7528\u83b7\u53d6\u4fee\u4e3a"));
             meta.setLore(lore);
             item.setItemMeta(meta);
         }

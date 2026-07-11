@@ -80,7 +80,7 @@ public class AlchemyGUI implements Listener {
             "\u00a7e\u00a7l" + pill.get("name"),
             "\u00a77\u5883\u754c: \u00a7e" + getRealm(id),
             "\u00a77\u4fee\u4e3a: \u00a7a+" + pill.get("xp-amount"),
-            "\u00a77\u8017\u6750: \u00a7e" + matId + " x" + matCost,
+            "\u00a77\u8017\u6750: \u00a7e" + stripMaterialPrefix(matId) + " x" + matCost,
             "\u00a77\u7075\u77f3: \u00a7e" + moneyCost));
 
         String[][] q = {{"\u00a77\u51e1\u54c1","40%","1x"},{"\u00a7a\u7075\u54c1","25%","2x"},
@@ -93,7 +93,7 @@ public class AlchemyGUI implements Listener {
         }
         inv.setItem(27, scrapBtn());
 
-        inv.setItem(30, createItem(Material.PAPER, "\u00a77\u6240\u9700\u8017\u6750", "\u00a7e" + matId + " x" + matCost));
+        inv.setItem(30, createItem(Material.PAPER, "\u00a77\u6240\u9700\u8017\u6750", "\u00a7e" + stripMaterialPrefix(matId) + " x" + matCost));
         inv.setItem(32, createItem(Material.GOLD_NUGGET, "\u00a77\u6240\u9700\u7075\u77f3", "\u00a7e" + moneyCost));
         inv.setItem(40, craftBtn());
 
@@ -178,7 +178,7 @@ public class AlchemyGUI implements Listener {
         int matCost = craftManager.getMaterialCost(ri);
         int moneyCost = craftManager.getMoneyCost(ri);
         if (countMat(p, matId) < matCost) {
-            p.sendMessage("\u00a7c\u8017\u6750\u4e0d\u8db3\uff01\u9700\u8981 " + matCost + " \u4e2a " + matId);
+            p.sendMessage("\u00a7c\u8017\u6750\u4e0d\u8db3\uff01\u9700\u8981 " + matCost + " \u4e2a " + stripMaterialPrefix(matId));
             return;
         }
         if (!hasMoney(p, moneyCost)) {
@@ -220,6 +220,11 @@ public class AlchemyGUI implements Listener {
         return list;
     }
 
+    private String stripMaterialPrefix(String matId) {
+        if (matId != null && matId.startsWith("material_")) return matId.substring(9);
+        return matId;
+    }
+
     private ItemStack makePillIcon(String id) {
         Map<String, Object> p = plugin.getAllPills().get(id);
         if (p == null) return new ItemStack(Material.AIR);
@@ -236,7 +241,7 @@ public class AlchemyGUI implements Listener {
         return createItem(icon, name,
             "\u00a77\u5883\u754c: \u00a7e" + realm,
             "\u00a77\u4fee\u4e3a: \u00a7a+" + xp,
-            "\u00a77\u8017\u6750: \u00a7e" + mat,
+            "\u00a77\u8017\u6750: \u00a7e" + stripMaterialPrefix(mat),
             "",
             "\u00a7e\u70b9\u51fb\u70bc\u5236");
     }
