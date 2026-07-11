@@ -238,13 +238,9 @@ public class AlchemyGUI implements Listener {
         else if (xp <= 8000) icon = Material.IRON_INGOT;
         else if (xp <= 35000) icon = Material.GOLD_INGOT;
         else icon = Material.DIAMOND;
-        int maxXp = xp * 64;
-        String xpLine;
-        if (xp >= 10000) xpLine = "\u00a77\u4fee\u4e3a: \u00a7e+" + (xp/1000) + "k~" + (maxXp/1000) + "k";
-        else xpLine = "\u00a77\u4fee\u4e3a: \u00a7e+" + xp + "~" + maxXp;
         return createItem(icon, name,
             "\u00a77\u5883\u754c: \u00a7e" + realm,
-            xpLine,
+            "\u00a77\u4fee\u4e3a: \u00a7a+" + xp,
             "\u00a77\u8017\u6750: \u00a7e" + stripMaterialPrefix(mat),
             "",
             "\u00a7e\u70b9\u51fb\u70bc\u5236");
