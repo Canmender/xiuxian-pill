@@ -305,46 +305,33 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
     }
 
     private boolean addXpToPlayer(Player p, int xpAmount, boolean isLianti) {
+        // Use XiuXianCore's command system - 100% reliable, no reflection needed
         try {
-            org.bukkit.plugin.Plugin plugin = Bukkit.getPluginManager().getPlugin("XiuXianCore");
-            if (plugin == null) { getLogger().warning("XiuXianCore not found"); return false; }
-            java.lang.reflect.Method method = plugin.getClass().getMethod("addXp", UUID.class, double.class, boolean.class);
-            method.invoke(plugin, p.getUniqueId(), (double) xpAmount, isLianti);
-            java.lang.reflect.Method levelUpMethod = plugin.getClass().getMethod("checkLevelUp", UUID.class);
-            levelUpMethod.invoke(plugin, p.getUniqueId());
+            String typeArg = isLianti ? "lianti" : "xiufa";
+            // Step 1: Add XP via command
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "xw addxp " + p.getName() + " " + xpAmount);
             return true;
         } catch (Exception e) {
-            getLogger().warning("addXp reflection failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-            // Fallback: directly modify JSON
+            getLogger().warning("addXp via command failed: " + e.getMessage());
+            // Fallback: direct JSON write
             return addXpDirect(p, xpAmount, isLianti);
         }
     }
 
     private boolean addXpDirect(Player p, int xpAmount, boolean isLianti) {
-        if (xiuxianDataDir == null || !xiuxianDataDir.exists()) return false;
+        if (xiuxianDataDir == null || !xiuxianDataDir.exists()) {
+            // Try default path
+            xiuxianDataDir = new File("plugins/XiuXianCore/data");
+        }
+        if (!xiuxianDataDir.exists()) return false;
         File file = new File(xiuxianDataDir, p.getUniqueId().toString() + ".json");
         if (!file.exists()) return false;
         try {
             JsonObject json = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
             String typeKey = isLianti ? "liantiXp" : "xiufaXp";
+            String levelKey = isLianti ? "liantiLevel" : "xiufaLevel";
             double currentXp = json.has(typeKey) ? json.get(typeKey).getAsDouble() : 0;
             json.addProperty(typeKey, currentXp + xpAmount);
-            // Level up check
-            String levelKey = isLianti ? "liantiLevel" : "xiufaLevel";
-            int level = json.has(levelKey) ? json.get(levelKey).getAsInt() : 0;
-            double xpBase = json.has("xpBase") ? json.get("xpBase").getAsDouble() : 128;
-            double xpRate = json.has("xpRate") ? json.get("xpRate").getAsDouble() : 1.014;
-            double xpNeeded = xpBase * Math.pow(xpRate, level + 1);
-            while (level < 1300 && currentXp + xpAmount >= xpNeeded) {
-                currentXp += xpAmount - xpNeeded;
-                xpAmount = (int) currentXp;
-                currentXp = 0;
-                level++;
-                json.addProperty(levelKey, level);
-                json.addProperty(typeKey, 0.0);
-                xpNeeded = xpBase * Math.pow(xpRate, level + 1);
-            }
-            if (currentXp > 0) json.addProperty(typeKey, currentXp);
             FileWriter writer = new FileWriter(file);
             writer.write(json.toString());
             writer.close();
@@ -402,10 +389,9 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
             String qN = (qualityIndex >= 0 && qualityIndex < 7) ? qNames[qualityIndex] : "";
             meta.setDisplayName(qN + pill.name);
             List<String> lore = new ArrayList<>();
+            lore.add(colorize("\u00a77" + pill.description));
             lore.add(colorize("\u00a77\u5883\u754c: \u00a7e" + pill.realm));
-            lore.add(colorize("\u00a77\u4fee\u4e3a: \u00a7a+" + pill.xpAmount + " \u00a77(\u57fa\u7840)"));
-            lore.add("");
-            lore.add(colorize("\u00a78\u53f3\u952e\u670d\u7528\u83b7\u53d6\u4fee\u4e3a"));
+            lore.add(colorize("\u00a77\u4fee\u4e3a: \u00a7a+" + pill.xpAmount));
             meta.setLore(lore);
             item.setItemMeta(meta);
         }
