@@ -330,11 +330,20 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
     }
 
     private PillData findPill(String displayName, Material material) {
+        // Strip quality color prefix like §7凡品
+        String cleanName = displayName;
+        String[] qPrefixes = {"§7凡品", "§a灵品", "§b宝品", "§6圣品", "§5仙品", "§c天品", "§4神品"};
+        for (String q : qPrefixes) {
+            if (cleanName.startsWith(q)) {
+                cleanName = cleanName.substring(q.length());
+                break;
+            }
+        }
         for (PillData pill : liantiPills.values()) {
-            if (pill.material == material && pill.name.equals(displayName)) return pill;
+            if (pill.material == material && pill.name.equals(cleanName)) return pill;
         }
         for (PillData pill : xiufaPills.values()) {
-            if (pill.material == material && pill.name.equals(displayName)) return pill;
+            if (pill.material == material && pill.name.equals(cleanName)) return pill;
         }
         return null;
     }
