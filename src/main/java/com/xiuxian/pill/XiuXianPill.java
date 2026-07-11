@@ -307,13 +307,52 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
     private boolean addXpToPlayer(Player p, int xpAmount, boolean isLianti) {
         try {
             org.bukkit.plugin.Plugin plugin = Bukkit.getPluginManager().getPlugin("XiuXianCore");
-            if (plugin == null) return false;
+            if (plugin == null) { getLogger().warning("XiuXianCore not found"); return false; }
             java.lang.reflect.Method method = plugin.getClass().getMethod("addXp", UUID.class, double.class, boolean.class);
             method.invoke(plugin, p.getUniqueId(), (double) xpAmount, isLianti);
             java.lang.reflect.Method levelUpMethod = plugin.getClass().getMethod("checkLevelUp", UUID.class);
             levelUpMethod.invoke(plugin, p.getUniqueId());
             return true;
-        } catch (Exception e) { return false; }
+        } catch (Exception e) {
+            getLogger().warning("addXp reflection failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            // Fallback: directly modify JSON
+            return addXpDirect(p, xpAmount, isLianti);
+        }
+    }
+
+    private boolean addXpDirect(Player p, int xpAmount, boolean isLianti) {
+        if (xiuxianDataDir == null || !xiuxianDataDir.exists()) return false;
+        File file = new File(xiuxianDataDir, p.getUniqueId().toString() + ".json");
+        if (!file.exists()) return false;
+        try {
+            JsonObject json = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
+            String typeKey = isLianti ? "liantiXp" : "xiufaXp";
+            double currentXp = json.has(typeKey) ? json.get(typeKey).getAsDouble() : 0;
+            json.addProperty(typeKey, currentXp + xpAmount);
+            // Level up check
+            String levelKey = isLianti ? "liantiLevel" : "xiufaLevel";
+            int level = json.has(levelKey) ? json.get(levelKey).getAsInt() : 0;
+            double xpBase = json.has("xpBase") ? json.get("xpBase").getAsDouble() : 128;
+            double xpRate = json.has("xpRate") ? json.get("xpRate").getAsDouble() : 1.014;
+            double xpNeeded = xpBase * Math.pow(xpRate, level + 1);
+            while (level < 1300 && currentXp + xpAmount >= xpNeeded) {
+                currentXp += xpAmount - xpNeeded;
+                xpAmount = (int) currentXp;
+                currentXp = 0;
+                level++;
+                json.addProperty(levelKey, level);
+                json.addProperty(typeKey, 0.0);
+                xpNeeded = xpBase * Math.pow(xpRate, level + 1);
+            }
+            if (currentXp > 0) json.addProperty(typeKey, currentXp);
+            FileWriter writer = new FileWriter(file);
+            writer.write(json.toString());
+            writer.close();
+            return true;
+        } catch (Exception e) {
+            getLogger().warning("addXpDirect failed: " + e.getMessage());
+            return false;
+        }
     }
 
     private int getPlayerRealmIndex(Player p, boolean isLianti) {
@@ -327,6 +366,13 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
                 (json.has("xiufaLevel") ? json.get("xiufaLevel").getAsInt() : 0);
             return level / 100;
         } catch (Exception e) { return 12; }
+    }
+
+    private String stripMaterialPrefix(String matId) {
+        if (matId != null && matId.startsWith("material_")) {
+            return matId.substring(9);
+        }
+        return matId;
     }
 
     private PillData findPill(String displayName, Material material) {
@@ -352,12 +398,16 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
         ItemStack item = new ItemStack(pill.material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            String[] qNames = {"\u00a77\u51e1\u54c1", "\u00a7a\u7075\u54c1", "\u00a7b\u5b9d\u54c1", "\u00a76\u5723\u54c1", "\u00a75\u4ed9\u54c1", "\u00a7c\u5929\u54c1", "\u00a74\u795e\u54c1"}; String qN = (qualityIndex >= 0 && qualityIndex < 7) ? qNames[qualityIndex] : ""; meta.setDisplayName(qN + pill.name);
+            String[] qNames = {"\u00a77\u51e1\u54c1", "\u00a7a\u7075\u54c1", "\u00a7b\u5b9d\u54c1", "\u00a76\u5723\u54c1", "\u00a75\u4ed9\u54c1", "\u00a7c\u5929\u54c1", "\u00a74\u795e\u54c1"};
+            String qN = (qualityIndex >= 0 && qualityIndex < 7) ? qNames[qualityIndex] : "";
+            meta.setDisplayName(qN + pill.name);
             List<String> lore = new ArrayList<>();
-            lore.add(colorize(pill.description));
-            lore.add(colorize("\u00a77\u5883\u754c: " + pill.realm));
-            lore.add(colorize("\u00a77\u4fee\u4e3a: +" + pill.xpAmount));
+            // Dynamic description: show base XP amount
+            lore.add(colorize("\u00a77\u670d\u7528\u540e\u83b7\u5f97 \u00a7a+" + pill.xpAmount + " \u00a77\u4fee\u4e3a"));
+            lore.add(colorize("\u00a77\u5883\u754c: \u00a7e" + pill.realm));
+            lore.add(colorize("\u00a77\u57fa\u7840\u4fee\u4e3a: \u00a7a+" + pill.xpAmount));
             lore.add("");
+            lore.add(colorize("\u00a78\u54c1\u8d28\u5f71\u54cd\u4fee\u4e3a\u500d\u7387"));
             lore.add(colorize("\u00a77\u53f3\u952e\u670d\u7528"));
             meta.setLore(lore);
             item.setItemMeta(meta);
