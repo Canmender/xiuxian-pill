@@ -390,7 +390,12 @@ public class XiuXianPill extends JavaPlugin implements CommandExecutor, Listener
             meta.setDisplayName(qN + pill.name);
             List<String> lore = new ArrayList<>();
             lore.add("\u00a77\u5883\u754c: \u00a7e" + pill.realm);
-            lore.add("\u00a7a\u4fee\u4e3a: \u00a7e+" + pill.xpAmount);
+            String[] qL = {"\u00a77\u51e1\u54c1", "\u00a7a\u7075\u54c1", "\u00a7b\u5b9d\u54c1", "\u00a76\u5723\u54c1", "\u00a75\u4ed9\u54c1", "\u00a7c\u5929\u54c1", "\u00a74\u795e\u54c1"};
+            double[] qM = {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
+            for (int i = 0; i < 7; i++) {
+                int xp = (int)(pill.xpAmount * qM[i]);
+                lore.add(qL[i] + ": \u00a7e+" + xp);
+            }
             meta.setLore(lore);
             item.setItemMeta(meta);
         }
